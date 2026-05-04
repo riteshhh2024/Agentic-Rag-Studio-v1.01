@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>RAG Solution Studio — Workflow Guide</title>
+<style>
+  :root {
+    --bg:        #0d0d0f;
+    --bg2:       #131316;
+    --bg3:       #1a1a1f;
+    --card:      #18181d;
+    --line:      #2a2a32;
+    --text:      #e8e8f0;
+    --muted:     #6b6b80;
+    --cyan:      #00d4ff;
+    --lime:      #a8e063;
+    --purple:    #b080ff;
+    --orange:    #ff9f43;
+    --red:       #ff6b6b;
+    --yellow:    #ffd93d;
+    --cyan-soft: rgba(0,212,255,0.08);
+    --lime-soft: rgba(168,224,99,0.08);
+    --purple-soft:rgba(176,128,255,0.08);
+    --orange-soft:rgba(255,159,67,0.08);
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui,sans-serif; font-size:14px; line-height:1.6; }
+  a { color:var(--cyan); }
+
+  /* ── layout ── */
+  .wrap { max-width:1100px; margin:0 auto; padding:40px 24px; }
+  .section { margin-bottom:64px; }
+  h1 { font-size:36px; font-weight:700; letter-spacing:-1px; }
+  h2 { font-size:22px; font-weight:700; margin-bottom:20px; color:var(--text); }
+  h3 { font-size:15px; font-weight:600; margin-bottom:10px; }
+  .eyebrow { font-size:11px; font-weight:600; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
+  .sub { color:var(--muted); font-size:13px; margin-top:6px; }
+
+  /* ── cards ── */
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:22px; }
+  .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; }
+  .flex { display:flex; }
+  .flex-col { display:flex; flex-direction:column; }
+  .gap-2 { gap:8px; }
+  .gap-3 { gap:12px; }
+  .gap-4 { gap:16px; }
+  .items-center { align-items:center; }
+  .justify-between { justify-content:space-between; }
+  .mb-2 { margin-bottom:8px; }
+  .mb-3 { margin-bottom:12px; }
+  .mb-4 { margin-bottom:16px; }
+  .mt-2 { margin-top:8px; }
+  .mt-3 { margin-top:12px; }
+
+  /* ── badges ── */
+  .badge { display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:20px; font-size:10.5px; font-weight:600; letter-spacing:.3px; }
+  .badge-cyan   { background:var(--cyan-soft);   color:var(--cyan);   border:1px solid rgba(0,212,255,.2); }
+  .badge-lime   { background:var(--lime-soft);   color:var(--lime);   border:1px solid rgba(168,224,99,.2); }
+  .badge-purple { background:var(--purple-soft); color:var(--purple); border:1px solid rgba(176,128,255,.2); }
+  .badge-orange { background:var(--orange-soft); color:var(--orange); border:1px solid rgba(255,159,67,.2); }
+  .badge-red    { background:rgba(255,107,107,.08); color:var(--red);  border:1px solid rgba(255,107,107,.2); }
+
+  /* ── code ── */
+  pre, code { font-family:'Cascadia Code','Fira Code',monospace; }
+  pre { background:#0a0a0c; border:1px solid var(--line); border-radius:10px; padding:16px 18px; font-size:12px; overflow-x:auto; line-height:1.7; }
+  .hl-cyan   { color:var(--cyan); }
+  .hl-lime   { color:var(--lime); }
+  .hl-purple { color:var(--purple); }
+  .hl-orange { color:var(--orange); }
+  .hl-muted  { color:var(--muted); }
+  .hl-red    { color:var(--red); }
+
+  /* ── flow steps ── */
+  .flow { display:flex; align-items:flex-start; gap:0; flex-wrap:wrap; }
+  .flow-step { display:flex; flex-direction:column; align-items:center; position:relative; }
+  .flow-box {
+    background:var(--bg3); border:1px solid var(--line); border-radius:10px;
+    padding:10px 14px; min-width:130px; text-align:center; font-size:12px;
+    font-weight:600; position:relative;
+  }
+  .flow-label { font-size:10px; color:var(--muted); margin-top:5px; text-align:center; max-width:130px; }
+  .flow-arrow { display:flex; align-items:center; padding:0 6px; padding-top:20px; }
+  .flow-arrow svg { flex-shrink:0; }
+
+  /* ── node pipeline ── */
+  .node-pipe { display:flex; flex-direction:column; gap:0; }
+  .node-item { display:flex; align-items:stretch; gap:14px; }
+  .node-line { display:flex; flex-direction:column; align-items:center; width:32px; flex-shrink:0; }
+  .node-dot { width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex-shrink:0; }
+  .node-connector { width:2px; flex:1; min-height:20px; background:var(--line); }
+  .node-body { flex:1; padding-bottom:20px; }
+  .node-title { font-size:13.5px; font-weight:700; margin-bottom:6px; }
+  .node-desc { font-size:12.5px; color:var(--muted); line-height:1.6; }
+  .node-method { display:inline-block; background:#0a0a0c; border:1px solid var(--line); border-radius:6px; padding:2px 8px; font-family:monospace; font-size:11px; color:var(--cyan); margin-top:6px; }
+
+  /* ── table ── */
+  table { width:100%; border-collapse:collapse; font-size:12.5px; }
+  th { text-align:left; padding:10px 14px; background:var(--bg3); color:var(--muted); font-size:10.5px; font-weight:600; letter-spacing:.5px; text-transform:uppercase; border-bottom:1px solid var(--line); }
+  td { padding:10px 14px; border-bottom:1px solid var(--line); vertical-align:top; }
+  tr:last-child td { border-bottom:none; }
+  tr:hover td { background:rgba(255,255,255,.02); }
+  code { background:#0a0a0c; border:1px solid var(--line); border-radius:4px; padding:1px 5px; font-size:11px; color:var(--cyan); }
+
+  /* ── mock UI ── */
+  .mock-ui { background:#0d0d10; border:1px solid #2a2a38; border-radius:16px; overflow:hidden; }
+  .mock-bar { background:#131318; padding:10px 16px; border-bottom:1px solid #1e1e28; display:flex; align-items:center; gap:8px; }
+  .mock-dot { width:10px; height:10px; border-radius:50%; }
+  .mock-url { font-size:11px; color:var(--muted); flex:1; text-align:center; }
+  .mock-content { padding:20px 24px; }
+  .bubble { border-radius:12px; padding:12px 15px; font-size:13px; line-height:1.65; max-width:82%; margin-bottom:10px; }
+  .bubble-user { background:#1e2030; border:1px solid #2a2d45; color:#c8c8e8; margin-left:auto; border-bottom-right-radius:3px; }
+  .bubble-ai { background:#121a1f; border:1px solid #1a2d35; color:var(--text); border-bottom-left-radius:3px; }
+  .citation-chip { display:inline-flex; align-items:center; gap:4px; background:rgba(0,212,255,.08); border:1px solid rgba(0,212,255,.2); border-radius:6px; padding:2px 7px; font-size:10.5px; color:var(--cyan); margin:2px; }
+  .trace-row { display:flex; align-items:center; gap:8px; padding:7px 10px; background:#0d1014; border:1px solid #1a2228; border-radius:8px; margin-bottom:5px; font-size:11.5px; }
+  .trace-icon { width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; flex-shrink:0; }
+  .trace-name { font-weight:600; min-width:140px; }
+  .trace-detail { color:var(--muted); flex:1; }
+  .trace-ms { color:var(--muted); font-size:10.5px; min-width:55px; text-align:right; }
+  .risk-pill { padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; letter-spacing:.5px; }
+  .risk-low    { background:rgba(168,224,99,.12); color:var(--lime);   border:1px solid rgba(168,224,99,.25); }
+  .risk-medium { background:rgba(255,159,67,.12); color:var(--orange); border:1px solid rgba(255,159,67,.25); }
+  .risk-high   { background:rgba(255,107,107,.12); color:var(--red);   border:1px solid rgba(255,107,107,.25); }
+
+  /* ── metrics row ── */
+  .metrics-row { display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; }
+  .metric-chip { background:var(--bg3); border:1px solid var(--line); border-radius:8px; padding:8px 12px; text-align:center; min-width:90px; }
+  .metric-val { font-size:17px; font-weight:700; }
+  .metric-lbl { font-size:10px; color:var(--muted); margin-top:2px; }
+
+  /* ── divider ── */
+  .divider { height:1px; background:var(--line); margin:32px 0; }
+
+  /* ── hero gradient text ── */
+  .grad { background:linear-gradient(135deg,var(--cyan),var(--purple)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+
+  /* ── step number ── */
+  .step-num { width:28px; height:28px; border-radius:50%; background:var(--bg3); border:1px solid var(--line); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; color:var(--muted); flex-shrink:0; }
+
+  /* ── section header accent ── */
+  .section-accent { width:3px; height:22px; border-radius:2px; flex-shrink:0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ══════════════ HERO ══════════════ -->
+  <div class="section" style="padding-top:16px">
+    <div class="eyebrow">Agentic RAG Solution Studio</div>
+    <h1><span class="grad">Workflow Guide</span></h1>
+    <p class="sub" style="max-width:580px;margin-top:10px;font-size:14px;">
+      End-to-end technical walkthrough — every screen, every API call, every method that fires
+      from the moment you click <strong>Launch</strong> to the moment an agent answer appears.
+    </p>
+    <div class="flex gap-2 mt-3" style="flex-wrap:wrap">
+      <span class="badge badge-cyan">FastAPI Backend</span>
+      <span class="badge badge-lime">LangGraph-style Agent</span>
+      <span class="badge badge-purple">ChromaDB Vectors</span>
+      <span class="badge badge-orange">Ollama / OpenAI</span>
+      <span class="badge" style="background:var(--bg3);border:1px solid var(--line);color:var(--muted)">React UMD + Babel</span>
+    </div>
+  </div>
+
+  <!-- ══════════════ ARCHITECTURE DIAGRAM ══════════════ -->
+  <div class="section">
+    <div class="flex items-center gap-2 mb-3">
+      <div class="section-accent" style="background:var(--cyan)"></div>
+      <div class="eyebrow" style="margin:0">Section 01</div>
+    </div>
+    <h2>System Architecture</h2>
+
+    <div class="card" style="padding:0;overflow:hidden">
+      <div style="padding:14px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:13px;font-weight:600">Full Stack Overview — 4 Layers</span>
+        <span class="badge badge-lime">Production Architecture</span>
+      </div>
+
+      <!-- SVG Architecture Diagram -->
+      <svg viewBox="0 0 1060 620" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;background:#0d0d0f">
+        <defs>
+          <marker id="arr" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#2a2a3a"/>
+          </marker>
+          <marker id="arr-c" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#00d4ff"/>
+          </marker>
+          <marker id="arr-l" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#a8e063"/>
+          </marker>
+          <marker id="arr-p" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#b080ff"/>
+          </marker>
+        </defs>
+
+        <!-- Layer labels left side -->
+        <text x="14" y="95"  fill="#2a2a3a" font-size="10" font-family="monospace" transform="rotate(-90,14,95)">BROWSER</text>
+        <text x="14" y="260" fill="#2a2a3a" font-size="10" font-family="monospace" transform="rotate(-90,14,260)">BACKEND</text>
+        <text x="14" y="435" fill="#2a2a3a" font-size="10" font-family="monospace" transform="rotate(-90,14,435)">DATA</text>
+        <text x="14" y="580" fill="#2a2a3a" font-size="10" font-family="monospace" transform="rotate(-90,14,580)">AI</text>
+
+        <!-- ─── LAYER 1: Browser ─── -->
+        <rect x="36" y="22" width="1008" height="120" rx="12" fill="#13131a" stroke="#1e1e2e" stroke-width="1.5"/>
+        <text x="56" y="42" fill="#3a3a5a" font-size="9.5" font-family="monospace" font-weight="600" letter-spacing="1.5">LAYER 1 · BROWSER — React 18 UMD + Babel Standalone</text>
+
+        <!-- Screen boxes -->
+        <!-- onboarding -->
+        <rect x="58"  y="54" width="130" height="70" rx="8" fill="#1a1a28" stroke="#2a2a40"/>
+        <text x="123" y="76" fill="#b080ff" font-size="10" text-anchor="middle" font-weight="700">ONBOARDING</text>
+        <text x="123" y="91" fill="#6b6b80" font-size="9"  text-anchor="middle">onboarding.jsx</text>
+        <text x="123" y="107" fill="#6b6b80" font-size="8.5" text-anchor="middle">handleLaunch()</text>
+        <text x="123" y="118" fill="#6b6b80" font-size="8.5" text-anchor="middle">API.usecases.create()</text>
+
+        <!-- documents -->
+        <rect x="208" y="54" width="130" height="70" rx="8" fill="#1a1a28" stroke="#2a2a40"/>
+        <text x="273" y="76" fill="#00d4ff" font-size="10" text-anchor="middle" font-weight="700">DOCUMENTS</text>
+        <text x="273" y="91" fill="#6b6b80" font-size="9"  text-anchor="middle">documents.jsx</text>
+        <text x="273" y="107" fill="#6b6b80" font-size="8.5" text-anchor="middle">handleUpload()</text>
+        <text x="273" y="118" fill="#6b6b80" font-size="8.5" text-anchor="middle">API.documents.upload()</text>
+
+        <!-- rag config -->
+        <rect x="358" y="54" width="130" height="70" rx="8" fill="#1a1a28" stroke="#2a2a40"/>
+        <text x="423" y="76" fill="#a8e063" font-size="10" text-anchor="middle" font-weight="700">RAG CONFIG</text>
+        <text x="423" y="91" fill="#6b6b80" font-size="9"  text-anchor="middle">rag.jsx</text>
+        <text x="423" y="107" fill="#6b6b80" font-size="8.5" text-anchor="middle">runIndex()</text>
+        <text x="423" y="118" fill="#6b6b80" font-size="8.5" text-anchor="middle">API.rag.index()</text>
+
+        <!-- agent -->
+        <rect x="508" y="54" width="130" height="70" rx="8" fill="#1a2818" stroke="#2a3a28"/>
+        <text x="573" y="76" fill="#a8e063" font-size="10" text-anchor="middle" font-weight="700">AGENT</text>
+        <text x="573" y="91" fill="#6b6b80" font-size="9"  text-anchor="middle">agent.jsx</text>
+        <text x="573" y="107" fill="#6b6b80" font-size="8.5" text-anchor="middle">handleAsk()</text>
+        <text x="573" y="118" fill="#6b6b80" font-size="8.5" text-anchor="middle">API.agent.ask()</text>
+
+        <!-- benchmarks -->
+        <rect x="658" y="54" width="130" height="70" rx="8" fill="#1a1a28" stroke="#2a2a40"/>
+        <text x="723" y="76" fill="#ffd93d" font-size="10" text-anchor="middle" font-weight="700">BENCHMARKS</text>
+        <text x="723" y="91" fill="#6b6b80" font-size="9"  text-anchor="middle">benchmarks.jsx</text>
+        <text x="723" y="107" fill="#6b6b80" font-size="8.5" text-anchor="middle">fetchBenchmarks()</text>
+        <text x="723" y="118" fill="#6b6b80" font-size="8.5" text-anchor="middle">API.benchmarks.get()</text>
+
+        <!-- settings -->
+        <rect x="808" y="54" width="130" height="70" rx="8" fill="#1a1a28" stroke="#2a2a40"/>
+        <text x="873" y="76" fill="#ff9f43" font-size="10" text-anchor="middle" font-weight="700">SETTINGS</text>
+        <text x="873" y="91" fill="#6b6b80" font-size="9"  text-anchor="middle">settings.jsx</text>
+        <text x="873" y="107" fill="#6b6b80" font-size="8.5" text-anchor="middle">testConnection()</text>
+        <text x="873" y="118" fill="#6b6b80" font-size="8.5" text-anchor="middle">testOllama()</text>
+
+        <!-- api.js -->
+        <rect x="950" y="54" width="82" height="70" rx="8" fill="#201828" stroke="#30204a"/>
+        <text x="991" y="76" fill="#b080ff" font-size="9.5" text-anchor="middle" font-weight="700">api.js</text>
+        <text x="991" y="91" fill="#6b6b80" font-size="8.5" text-anchor="middle">apiFetch()</text>
+        <text x="991" y="105" fill="#6b6b80" font-size="8" text-anchor="middle">→ fetch()</text>
+        <text x="991" y="117" fill="#6b6b80" font-size="8" text-anchor="middle">→ JSON parse</text>
+
+        <!-- ─── LAYER 2: FastAPI Backend ─── -->
+        <rect x="36" y="160" width="1008" height="155" rx="12" fill="#111118" stroke="#1e1e2e" stroke-width="1.5"/>
+        <text x="56" y="179" fill="#3a3a5a" font-size="9.5" font-family="monospace" font-weight="600" letter-spacing="1.5">LAYER 2 · FASTAPI SERVER — Python 3.11 · Uvicorn · SQLAlchemy 2</text>
+
+        <!-- Routers row -->
+        <text x="56" y="200" fill="#2a3a4a" font-size="9" font-family="monospace">ROUTERS</text>
+        <rect x="55"  y="207" width="95"  height="34" rx="6" fill="#0d1418" stroke="#1a2830"/>
+        <text x="103" y="220" fill="#00d4ff" font-size="9" text-anchor="middle" font-weight="600">usecases.py</text>
+        <text x="103" y="234" fill="#3a5060" font-size="8.5" text-anchor="middle">POST /usecases</text>
+
+        <rect x="160" y="207" width="95"  height="34" rx="6" fill="#0d1418" stroke="#1a2830"/>
+        <text x="208" y="220" fill="#00d4ff" font-size="9" text-anchor="middle" font-weight="600">documents.py</text>
+        <text x="208" y="234" fill="#3a5060" font-size="8.5" text-anchor="middle">POST /upload</text>
+
+        <rect x="265" y="207" width="95"  height="34" rx="6" fill="#0d1418" stroke="#1a2830"/>
+        <text x="313" y="220" fill="#00d4ff" font-size="9" text-anchor="middle" font-weight="600">rag.py</text>
+        <text x="313" y="234" fill="#3a5060" font-size="8.5" text-anchor="middle">POST /rag/index</text>
+
+        <rect x="370" y="207" width="95"  height="34" rx="6" fill="#0d1418" stroke="#1a2830"/>
+        <text x="418" y="220" fill="#00d4ff" font-size="9" text-anchor="middle" font-weight="600">agent.py</text>
+        <text x="418" y="234" fill="#3a5060" font-size="8.5" text-anchor="middle">POST /agent/ask</text>
+
+        <rect x="475" y="207" width="95"  height="34" rx="6" fill="#0d1418" stroke="#1a2830"/>
+        <text x="523" y="220" fill="#00d4ff" font-size="9" text-anchor="middle" font-weight="600">benchmarks.py</text>
+        <text x="523" y="234" fill="#3a5060" font-size="8.5" text-anchor="middle">GET /benchmarks</text>
+
+        <rect x="580" y="207" width="95"  height="34" rx="6" fill="#0d1418" stroke="#1a2830"/>
+        <text x="628" y="220" fill="#00d4ff" font-size="9" text-anchor="middle" font-weight="600">settings.py</text>
+        <text x="628" y="234" fill="#3a5060" font-size="8.5" text-anchor="middle">GET /settings</text>
+
+        <rect x="685" y="207" width="95"  height="34" rx="6" fill="#0d1418" stroke="#1a2830"/>
+        <text x="733" y="220" fill="#00d4ff" font-size="9" text-anchor="middle" font-weight="600">evaluation.py</text>
+        <text x="733" y="234" fill="#3a5060" font-size="8.5" text-anchor="middle">POST /evaluate</text>
+
+        <rect x="790" y="207" width="95"  height="34" rx="6" fill="#0d1418" stroke="#1a2830"/>
+        <text x="838" y="220" fill="#00d4ff" font-size="9" text-anchor="middle" font-weight="600">reports.py</text>
+        <text x="838" y="234" fill="#3a5060" font-size="8.5" text-anchor="middle">POST /reports</text>
+
+        <!-- Services row -->
+        <text x="56" y="262" fill="#2a3a4a" font-size="9" font-family="monospace">SERVICES</text>
+        <rect x="55"  y="268" width="200" height="38" rx="6" fill="#0d1820" stroke="#1a2830"/>
+        <text x="155" y="282" fill="#a8e063" font-size="9.5" text-anchor="middle" font-weight="700">RagService</text>
+        <text x="155" y="297" fill="#3a5040" font-size="8.5" text-anchor="middle">index()  retrieve()  save_config()  retrieve_for_agent()</text>
+
+        <rect x="265" y="268" width="200" height="38" rx="6" fill="#0d1820" stroke="#1a2830"/>
+        <text x="365" y="282" fill="#a8e063" font-size="9.5" text-anchor="middle" font-weight="700">AgentService</text>
+        <text x="365" y="297" fill="#3a5040" font-size="8.5" text-anchor="middle">run()  6 node methods  _persist_run()</text>
+
+        <rect x="475" y="268" width="200" height="38" rx="6" fill="#0d1820" stroke="#1a2830"/>
+        <text x="575" y="282" fill="#a8e063" font-size="9.5" text-anchor="middle" font-weight="700">LLMProvider  EmbeddingProvider</text>
+        <text x="575" y="297" fill="#3a5040" font-size="8.5" text-anchor="middle">generate()  embed()  embed_batch()</text>
+
+        <rect x="685" y="268" width="200" height="38" rx="6" fill="#0d1820" stroke="#1a2830"/>
+        <text x="785" y="282" fill="#a8e063" font-size="9.5" text-anchor="middle" font-weight="700">DocumentService</text>
+        <text x="785" y="297" fill="#3a5040" font-size="8.5" text-anchor="middle">upload()  extract_text()  chunk_text()</text>
+
+        <!-- ─── LAYER 3: Data ─── -->
+        <rect x="36" y="332" width="1008" height="135" rx="12" fill="#111114" stroke="#1e1e2e" stroke-width="1.5"/>
+        <text x="56" y="352" fill="#3a3a5a" font-size="9.5" font-family="monospace" font-weight="600" letter-spacing="1.5">LAYER 3 · PERSISTENCE — SQLite (Relational) + ChromaDB (Vector)</text>
+
+        <!-- SQLite box -->
+        <rect x="55" y="360" width="510" height="95" rx="8" fill="#0d0d12" stroke="#1a1a28"/>
+        <text x="310" y="378" fill="#b080ff" font-size="11" text-anchor="middle" font-weight="700">SQLite  ·  studio.db</text>
+        <!-- tables -->
+        <rect x="68"  y="386" width="82" height="58" rx="5" fill="#131320" stroke="#1e1e30"/>
+        <text x="109" y="400" fill="#6b6b90" font-size="8.5" text-anchor="middle" font-weight="600">use_cases</text>
+        <text x="109" y="413" fill="#3a3a55" font-size="7.5" text-anchor="middle">id · name</text>
+        <text x="109" y="424" fill="#3a3a55" font-size="7.5" text-anchor="middle">industry</text>
+        <text x="109" y="435" fill="#3a3a55" font-size="7.5" text-anchor="middle">answer_style</text>
+
+        <rect x="160" y="386" width="82" height="58" rx="5" fill="#131320" stroke="#1e1e30"/>
+        <text x="201" y="400" fill="#6b6b90" font-size="8.5" text-anchor="middle" font-weight="600">documents</text>
+        <text x="201" y="413" fill="#3a3a55" font-size="7.5" text-anchor="middle">filename</text>
+        <text x="201" y="424" fill="#3a3a55" font-size="7.5" text-anchor="middle">status</text>
+        <text x="201" y="435" fill="#3a3a55" font-size="7.5" text-anchor="middle">chunk_count</text>
+
+        <rect x="252" y="386" width="82" height="58" rx="5" fill="#131320" stroke="#1e1e30"/>
+        <text x="293" y="400" fill="#6b6b90" font-size="8.5" text-anchor="middle" font-weight="600">chunks</text>
+        <text x="293" y="413" fill="#3a3a55" font-size="7.5" text-anchor="middle">text</text>
+        <text x="293" y="424" fill="#3a3a55" font-size="7.5" text-anchor="middle">vector_id</text>
+        <text x="293" y="435" fill="#3a3a55" font-size="7.5" text-anchor="middle">chunk_index</text>
+
+        <rect x="344" y="386" width="82" height="58" rx="5" fill="#131320" stroke="#1e1e30"/>
+        <text x="385" y="400" fill="#6b6b90" font-size="8.5" text-anchor="middle" font-weight="600">rag_configs</text>
+        <text x="385" y="413" fill="#3a3a55" font-size="7.5" text-anchor="middle">chunk_size</text>
+        <text x="385" y="424" fill="#3a3a55" font-size="7.5" text-anchor="middle">top_k</text>
+        <text x="385" y="435" fill="#3a3a55" font-size="7.5" text-anchor="middle">embed_provider</text>
+
+        <rect x="436" y="386" width="120" height="58" rx="5" fill="#131320" stroke="#1e1e30"/>
+        <text x="496" y="400" fill="#6b6b90" font-size="8.5" text-anchor="middle" font-weight="600">agent_runs</text>
+        <text x="496" y="413" fill="#3a3a55" font-size="7.5" text-anchor="middle">question · answer</text>
+        <text x="496" y="424" fill="#3a3a55" font-size="7.5" text-anchor="middle">risk_level</text>
+        <text x="496" y="435" fill="#3a3a55" font-size="7.5" text-anchor="middle">latency · tokens · cost</text>
+
+        <!-- ChromaDB box -->
+        <rect x="578" y="360" width="454" height="95" rx="8" fill="#0d1210" stroke="#1a281a"/>
+        <text x="805" y="378" fill="#a8e063" font-size="11" text-anchor="middle" font-weight="700">ChromaDB  ·  Persistent Vector Store</text>
+        <rect x="592" y="386" width="200" height="58" rx="5" fill="#111a10" stroke="#1e2e1a"/>
+        <text x="692" y="400" fill="#5a7a50" font-size="8.5" text-anchor="middle" font-weight="600">Collection: uc_{usecase_id}</text>
+        <text x="692" y="414" fill="#3a5030" font-size="8" text-anchor="middle">IDs: chunk UUIDs</text>
+        <text x="692" y="425" fill="#3a5030" font-size="8" text-anchor="middle">Vectors: 768-dim (nomic) / 1536-dim (OAI)</text>
+        <text x="692" y="436" fill="#3a5030" font-size="8" text-anchor="middle">Metadata: filename, doc_id, chunk_index</text>
+        <text x="692" y="447" fill="#3a5030" font-size="8" text-anchor="middle">Distance: cosine (hnsw)</text>
+
+        <rect x="804" y="386" width="216" height="58" rx="5" fill="#111a10" stroke="#1e2e1a"/>
+        <text x="912" y="400" fill="#5a7a50" font-size="8.5" text-anchor="middle" font-weight="600">Query Flow</text>
+        <text x="912" y="414" fill="#3a5030" font-size="8" text-anchor="middle">embed(query) → query_vector</text>
+        <text x="912" y="425" fill="#3a5030" font-size="8" text-anchor="middle">collection.query(query_vector, n=top_k)</text>
+        <text x="912" y="436" fill="#3a5030" font-size="8" text-anchor="middle">returns: docs, metadatas, distances</text>
+        <text x="912" y="447" fill="#3a5030" font-size="8" text-anchor="middle">score = 1 - cosine_distance</text>
+
+        <!-- ─── LAYER 4: AI Providers ─── -->
+        <rect x="36" y="484" width="1008" height="120" rx="12" fill="#0f0f0d" stroke="#1e1e2e" stroke-width="1.5"/>
+        <text x="56" y="504" fill="#3a3a5a" font-size="9.5" font-family="monospace" font-weight="600" letter-spacing="1.5">LAYER 4 · AI PROVIDERS — Local Ollama + Cloud OpenAI</text>
+
+        <!-- Ollama -->
+        <rect x="55" y="513" width="330" height="78" rx="8" fill="#0d100d" stroke="#1a201a"/>
+        <text x="220" y="532" fill="#a8e063" font-size="11" text-anchor="middle" font-weight="700">Ollama  (Local · Free)</text>
+        <text x="148" y="552" fill="#3a5030" font-size="8.5" text-anchor="middle">Chat: localhost:11434/v1</text>
+        <text x="148" y="565" fill="#3a5030" font-size="8.5" text-anchor="middle">OpenAI-compatible SDK</text>
+        <text x="148" y="578" fill="#4a7040" font-size="9" text-anchor="middle" font-weight="600">llama3.2:latest</text>
+        <text x="148" y="589" fill="#3a5030" font-size="8" text-anchor="middle">~7B params, 6-8s/response</text>
+
+        <text x="295" y="552" fill="#3a5030" font-size="8.5" text-anchor="middle">Embed: localhost:11434/api/embeddings</text>
+        <text x="295" y="565" fill="#3a5030" font-size="8.5" text-anchor="middle">httpx async POST · one-by-one</text>
+        <text x="295" y="578" fill="#4a7040" font-size="9" text-anchor="middle" font-weight="600">nomic-embed-text</text>
+        <text x="295" y="589" fill="#3a5030" font-size="8" text-anchor="middle">768 dimensions</text>
+
+        <!-- OpenAI -->
+        <rect x="398" y="513" width="330" height="78" rx="8" fill="#0d0d10" stroke="#1a1a28"/>
+        <text x="563" y="532" fill="#00d4ff" font-size="11" text-anchor="middle" font-weight="700">OpenAI  (Cloud · Paid)</text>
+        <text x="493" y="552" fill="#203040" font-size="8.5" text-anchor="middle">Chat: api.openai.com/v1</text>
+        <text x="493" y="565" fill="#203040" font-size="8.5" text-anchor="middle">AsyncOpenAI SDK · temp=0.1</text>
+        <text x="493" y="578" fill="#205060" font-size="9" text-anchor="middle" font-weight="600">gpt-4o-mini</text>
+        <text x="493" y="589" fill="#203040" font-size="8" text-anchor="middle">$0.15/1M in · $0.60/1M out</text>
+
+        <text x="643" y="552" fill="#203040" font-size="8.5" text-anchor="middle">Embed: api.openai.com/v1</text>
+        <text x="643" y="565" fill="#203040" font-size="8.5" text-anchor="middle">Batch embed · response.data[i].embedding</text>
+        <text x="643" y="578" fill="#205060" font-size="9" text-anchor="middle" font-weight="600">text-embedding-3-small</text>
+        <text x="643" y="589" fill="#203040" font-size="8" text-anchor="middle">1536 dimensions</text>
+
+        <!-- Cost note -->
+        <rect x="742" y="513" width="290" height="78" rx="8" fill="#0d0d0a" stroke="#1e1e18"/>
+        <text x="887" y="532" fill="#ffd93d" font-size="10" text-anchor="middle" font-weight="700">Provider Selection Rules</text>
+        <text x="887" y="550" fill="#3a3a28" font-size="8.5" text-anchor="middle">Embedding must match at index AND query time</text>
+        <text x="887" y="563" fill="#3a3a28" font-size="8.5" text-anchor="middle">Saved in rag_configs.embedding_provider</text>
+        <text x="887" y="576" fill="#3a3a28" font-size="8.5" text-anchor="middle">LLM provider is per-query (agent screen)</text>
+        <text x="887" y="589" fill="#3a3a28" font-size="8.5" text-anchor="middle">Ollama cost = $0.00 · OpenAI tracked per run</text>
+
+        <!-- ─── Vertical arrows between layers ─── -->
+        <!-- Browser → FastAPI -->
+        <line x1="123" y1="124" x2="103" y2="158" stroke="#2a2a40" stroke-width="1.5" marker-end="url(#arr)"/>
+        <line x1="273" y1="124" x2="208" y2="158" stroke="#2a2a40" stroke-width="1.5" marker-end="url(#arr)"/>
+        <line x1="423" y1="124" x2="313" y2="158" stroke="#2a2a40" stroke-width="1.5" marker-end="url(#arr)"/>
+        <line x1="573" y1="124" x2="418" y2="158" stroke="#2a2a40" stroke-width="1.5" marker-end="url(#arr)"/>
+
+        <!-- Services → Data -->
+        <line x1="155" y1="306" x2="200" y2="330" stroke="#1a2830" stroke-width="1.5" marker-end="url(#arr)"/>
+        <line x1="365" y1="306" x2="365" y2="330" stroke="#1a2830" stroke-width="1.5" marker-end="url(#arr)"/>
+        <line x1="575" y1="306" x2="700" y2="330" stroke="#1a2830" stroke-width="1.5" marker-end="url(#arr)"/>
+
+        <!-- Services → AI -->
+        <line x1="155" y1="306" x2="220" y2="482" stroke="#1a2818" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arr)"/>
+        <line x1="575" y1="306" x2="500" y2="482" stroke="#1a1a28" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arr)"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ══════════════ WORKFLOW A: USE CASE CREATION ══════════════ -->
+  <div class="section">
+    <div class="flex items-center gap-2 mb-3">
+      <div class="section-accent" style="background:var(--purple)"></div>
+      <div class="eyebrow" style="margin:0">Section 02 · Workflow A</div>
+    </div>
+    <h2>Use Case Creation — Onboarding Screen</h2>
+    <p class="sub mb-4">What fires when you fill out the form and click Launch</p>
+
+    <div class="grid-2 gap-4">
+      <div class="card">
+        <h3 class="mb-3">Step-by-step method chain</h3>
+        <div class="node-pipe">
+          <div class="node-item">
+            <div class="node-line">
+              <div class="node-dot" style="background:var(--purple-soft);border:2px solid var(--purple);color:var(--purple)">1</div>
+              <div class="node-connector"></div>
+            </div>
+            <div class="node-body">
+              <div class="node-title">User fills form + clicks Launch</div>
+              <div class="node-desc">onboarding.jsx collects: name, industry, business_problem, target_users[], document_types[], success_criteria[], answer_style</div>
+              <span class="node-method">handleLaunch()</span>
+            </div>
+          </div>
+          <div class="node-item">
+            <div class="node-line">
+              <div class="node-dot" style="background:var(--cyan-soft);border:2px solid var(--cyan);color:var(--cyan)">2</div>
+              <div class="node-connector"></div>
+            </div>
+            <div class="node-body">
+              <div class="node-title">Frontend calls the API</div>
+              <div class="node-desc">api.js executes <code>fetch("/usecases", {method:"POST", body: JSON.stringify(payload)})</code>. Returns promise.</div>
+              <span class="node-method">API.usecases.create(payload)</span>
+            </div>
+          </div>
+          <div class="node-item">
+            <div class="node-line">
+              <div class="node-dot" style="background:var(--lime-soft);border:2px solid var(--lime);color:var(--lime)">3</div>
+              <div class="node-connector"></div>
+            </div>
+            <div class="node-body">
+              <div class="node-title">FastAPI router receives POST /usecases</div>
+              <div class="node-desc">Pydantic validates UseCaseCreate schema. Injects db session via <code>Depends(get_db)</code>.</div>
+              <span class="node-method">usecases_router.create_usecase()</span>
+            </div>
+          </div>
+          <div class="node-item">
+            <div class="node-line">
+              <div class="node-dot" style="background:var(--orange-soft);border:2px solid var(--orange);color:var(--orange)">4</div>
+            </div>
+            <div class="node-body">
+              <div class="node-title">SQLite row inserted</div>
+              <div class="node-desc"><code>UseCase(id=uuid4(), name=..., ...)</code> added to session, committed. Returns full object with generated ID.</div>
+              <span class="node-method">db.add(usecase) → db.commit()</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card mb-4">
+          <h3 class="mb-2">What gets stored in SQLite</h3>
+          <pre><span class="hl-muted">-- use_cases table row</span>
+<span class="hl-cyan">id</span>               <span class="hl-lime">"caa1a77b-5e38-..."</span>
+<span class="hl-cyan">name</span>             <span class="hl-lime">"ShopEasy Customer Support"</span>
+<span class="hl-cyan">industry</span>         <span class="hl-lime">"E-commerce"</span>
+<span class="hl-cyan">business_problem</span> <span class="hl-lime">"Support agents waste time..."</span>
+<span class="hl-cyan">target_users</span>     <span class="hl-lime">["Support Agents","Customers"]</span>
+<span class="hl-cyan">answer_style</span>     <span class="hl-lime">"support-agent"</span>
+<span class="hl-cyan">created_at</span>       <span class="hl-lime">"2026-05-04T16:51:32"</span></pre>
+        </div>
+        <div class="card">
+          <h3 class="mb-2">API contract</h3>
+          <table>
+            <tr><th>Method</th><th>Endpoint</th><th>Returns</th></tr>
+            <tr><td><span class="badge badge-lime">POST</span></td><td><code>/usecases</code></td><td>UseCaseResponse (201)</td></tr>
+            <tr><td><span class="badge badge-cyan">GET</span></td><td><code>/usecases</code></td><td>list[UseCaseResponse]</td></tr>
+            <tr><td><span class="badge badge-cyan">GET</span></td><td><code>/usecases/{id}</code></td><td>UseCaseResponse</td></tr>
+            <tr><td><span class="badge badge-orange">PUT</span></td><td><code>/usecases/{id}</code></td><td>UseCaseResponse</td></tr>
+            <tr><td><span class="badge badge-red">DEL</span></td><td><code>/usecases/{id}</code></td><td>204 No Content</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ WORKFLOW B: DOCUMENT PIPELINE ══════════════ -->
+  <div class="section">
+    <div class="flex items-center gap-2 mb-3">
+      <div class="section-accent" style="background:var(--cyan)"></div>
+      <div class="eyebrow" style="margin:0">Section 03 · Workflow B</div>
+    </div>
+    <h2>Document Pipeline — Upload → Chunk → Store</h2>
+    <p class="sub mb-4">Every step from file selection to chunks sitting in SQLite ready to embed</p>
+
+    <div class="card mb-4" style="padding:20px 24px">
+      <div class="flow" style="gap:0;align-items:flex-start">
+        <div class="flow-step">
+          <div class="flow-box" style="border-color:var(--purple);background:var(--purple-soft)">
+            <div style="color:var(--purple);font-size:11px">📁 Browser</div>
+            <div style="margin-top:4px;font-size:11px">File selected</div>
+          </div>
+          <div class="flow-label">FormData with<br/>file + usecase_id</div>
+        </div>
+        <div class="flow-arrow"><svg width="28" height="12"><line x1="0" y1="6" x2="24" y2="6" stroke="#2a2a3a" stroke-width="1.5" marker-end="url(#arr)"/></svg></div>
+        <div class="flow-step">
+          <div class="flow-box" style="border-color:var(--cyan);background:var(--cyan-soft)">
+            <div style="color:var(--cyan);font-size:11px">📡 API</div>
+            <div style="margin-top:4px;font-size:11px">POST /documents<br/>/upload/{id}</div>
+          </div>
+          <div class="flow-label">multipart/form-data<br/>content-type</div>
+        </div>
+        <div class="flow-arrow"><svg width="28" height="12"><line x1="0" y1="6" x2="24" y2="6" stroke="#2a2a3a" stroke-width="1.5" marker-end="url(#arr)"/></svg></div>
+        <div class="flow-step">
+          <div class="flow-box" style="border-color:var(--lime);background:var(--lime-soft)">
+            <div style="color:var(--lime);font-size:11px">💾 Save File</div>
+            <div style="margin-top:4px;font-size:11px">uploads/<br/>{uuid}_{name}</div>
+          </div>
+          <div class="flow-label">aiofiles.open()<br/>write bytes</div>
+        </div>
+        <div class="flow-arrow"><svg width="28" height="12"><line x1="0" y1="6" x2="24" y2="6" stroke="#2a2a3a" stroke-width="1.5" marker-end="url(#arr)"/></svg></div>
+        <div class="flow-step">
+          <div class="flow-box" style="border-color:var(--orange);background:var(--orange-soft)">
+            <div style="color:var(--orange);font-size:11px">📄 Extract Text</div>
+            <div style="margin-top:4px;font-size:11px">PDF→PyPDF2<br/>MD/TXT→read</div>
+          </div>
+          <div class="flow-label">extract_text()<br/>→ raw string</div>
+        </div>
+        <div class="flow-arrow"><svg width="28" height="12"><line x1="0" y1="6" x2="24" y2="6" stroke="#2a2a3a" stroke-width="1.5" marker-end="url(#arr)"/></svg></div>
+        <div class="flow-step">
+          <div class="flow-box" style="border-color:#ffd93d;background:rgba(255,217,61,.08)">
+            <div style="color:#ffd93d;font-size:11px">✂️ Chunk Text</div>
+            <div style="margin-top:4px;font-size:11px">size=800<br/>overlap=120</div>
+          </div>
+          <div class="flow-label">chunk_text()<br/>sliding window</div>
+        </div>
+        <div class="flow-arrow"><svg width="28" height="12"><line x1="0" y1="6" x2="24" y2="6" stroke="#2a2a3a" stroke-width="1.5" marker-end="url(#arr)"/></svg></div>
+        <div class="flow-step">
+          <div class="flow-box" style="border-color:var(--purple);background:var(--purple-soft)">
+            <div style="color:var(--purple);font-size:11px">🗄️ SQLite</div>
+            <div style="margin-top:4px;font-size:11px">Document +<br/>N Chunk rows</div>
+          </div>
+          <div class="flow-label">status="processed"<br/>chunk_count=N</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2 gap-4">
+      <div class="card">
+        <h3 class="mb-2">chunk_text() — how splitting works</h3>
+        <pre><span class="hl-muted"># sliding window chunker</span>
+text = <span class="hl-lime">"...full document text..."</span>
+chunk_size = <span class="hl-cyan">800</span>    <span class="hl-muted"># characters</span>
+overlap    = <span class="hl-cyan">120</span>    <span class="hl-muted"># overlap between chunks</span>
+step = chunk_size - overlap   <span class="hl-muted"># = 680</span>
+
+chunks = []
+<span class="hl-orange">for</span> i <span class="hl-orange">in</span> range(<span class="hl-cyan">0</span>, len(text), step):
+    chunk = text[i : i + chunk_size]
+    <span class="hl-orange">if</span> len(chunk) > <span class="hl-cyan">50</span>:    <span class="hl-muted"># skip tiny tail</span>
+        chunks.append(chunk)
+
+<span class="hl-muted"># Each chunk stored as Chunk ORM row:</span>
+<span class="hl-muted"># chunk_index=0,1,2,...  text=...  vector_id=None</span></pre>
+      </div>
+      <div class="card">
+        <h3 class="mb-2">Document status lifecycle</h3>
+        <div class="flex-col gap-2">
+          <div class="flex items-center gap-3">
+            <span class="badge" style="background:rgba(107,107,128,.12);color:var(--muted);border:1px solid var(--line);min-width:80px;justify-content:center">uploaded</span>
+            <span style="font-size:12px;color:var(--muted)">File saved to disk, Document row inserted</span>
+          </div>
+          <div style="width:1px;height:10px;background:var(--line);margin-left:42px"></div>
+          <div class="flex items-center gap-3">
+            <span class="badge badge-orange" style="min-width:80px;justify-content:center">processed</span>
+            <span style="font-size:12px;color:var(--muted)">Text extracted, Chunk rows inserted in SQLite</span>
+          </div>
+          <div style="width:1px;height:10px;background:var(--line);margin-left:42px"></div>
+          <div class="flex items-center gap-3">
+            <span class="badge badge-lime" style="min-width:80px;justify-content:center">indexed</span>
+            <span style="font-size:12px;color:var(--muted)">Embeddings computed, vectors in ChromaDB</span>
+          </div>
+          <div style="width:1px;height:10px;background:var(--line);margin-left:42px"></div>
+          <div class="flex items-center gap-3">
+            <span class="badge badge-red" style="min-width:80px;justify-content:center">failed</span>
+            <span style="font-size:12px;color:var(--muted)">Error during any stage, check server logs</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ WORKFLOW C: RAG INDEXING ══════════════ -->
+  <div class="section">
+    <div class="flex items-center gap-2 mb-3">
+      <div class="section-accent" style="background:var(--lime)"></div>
+      <div class="eyebrow" style="margin:0">Section 04 · Workflow C</div>
+    </div>
+    <h2>RAG Indexing — Chunks → Embeddings → ChromaDB</h2>
+    <p class="sub mb-4">Fires when you click "Index &amp; Apply" on the RAG Config screen</p>
+
+    <div class="card mb-4">
+      <h3 class="mb-3">RagService.index() — full method trace</h3>
+      <pre><span class="hl-orange">async def</span> <span class="hl-lime">index</span>(self, payload: RagIndexRequest):
+    <span class="hl-muted"># 1. Load all SQLite chunks for this use case</span>
+    chunks = db.query(Chunk).filter(Chunk.usecase_id == <span class="hl-cyan">payload.usecase_id</span>).all()
+    <span class="hl-orange">if not</span> chunks: <span class="hl-orange">return</span> RagIndexResponse(status=<span class="hl-lime">"no_chunks"</span>)
+
+    <span class="hl-muted"># 2. Get or create ChromaDB collection for this use case</span>
+    collection = chromadb.PersistentClient(path=vector_store_dir)
+                         .get_or_create_collection(<span class="hl-lime">f"uc_{usecase_id}"</span>,
+                           metadata={<span class="hl-lime">"hnsw:space"</span>: <span class="hl-lime">"cosine"</span>})
+
+    <span class="hl-muted"># 3. Get embedding provider (openai or ollama)</span>
+    embedder = EmbeddingProvider(<span class="hl-cyan">payload.embedding_provider</span>)
+
+    <span class="hl-muted"># 4. Process in batches of 50</span>
+    <span class="hl-orange">for</span> batch <span class="hl-orange">in</span> batches(chunks, size=<span class="hl-cyan">50</span>):
+        texts      = [c.text <span class="hl-orange">for</span> c <span class="hl-orange">in</span> batch]
+        ids        = [c.id   <span class="hl-orange">for</span> c <span class="hl-orange">in</span> batch]
+        metadatas  = [{<span class="hl-lime">"filename"</span>: ..., <span class="hl-lime">"chunk_index"</span>: ...} ...]
+
+        <span class="hl-muted"># 5. Generate embeddings (async)</span>
+        embeddings = <span class="hl-orange">await</span> embedder.<span class="hl-lime">embed_batch</span>(texts)
+        <span class="hl-muted"># Ollama: POST /api/embeddings ×N  |  OpenAI: client.embeddings.create(input=texts)</span>
+
+        <span class="hl-muted"># 6. Upsert into ChromaDB</span>
+        collection.<span class="hl-lime">add</span>(embeddings=embeddings, documents=texts,
+                       metadatas=metadatas, ids=ids)
+
+        <span class="hl-muted"># 7. Write vector_id back to SQLite chunk row</span>
+        <span class="hl-orange">for</span> chunk <span class="hl-orange">in</span> batch: chunk.vector_id = chunk.id
+
+    <span class="hl-muted"># 8. Mark documents as indexed</span>
+    db.query(Document).filter(id.in_(doc_ids)).update({<span class="hl-lime">"status"</span>: <span class="hl-lime">"indexed"</span>})
+    db.commit()
+    <span class="hl-orange">return</span> RagIndexResponse(indexed_chunks=indexed, status=<span class="hl-lime">"indexed"</span>)</pre>
+    </div>
+
+    <div class="grid-3 gap-4">
+      <div class="card">
+        <div class="eyebrow mb-2">Ollama Path</div>
+        <h3 class="mb-2" style="color:var(--lime)">nomic-embed-text</h3>
+        <div style="font-size:12.5px;color:var(--muted);line-height:1.7">
+          Each text sent individually via <code>httpx</code> async POST to<br/>
+          <code style="color:var(--lime)">localhost:11434/api/embeddings</code><br/>
+          Returns <strong>768-dimensional</strong> float vector.<br/>
+          No API key. No cost. Runs locally.
+        </div>
+      </div>
+      <div class="card">
+        <div class="eyebrow mb-2">OpenAI Path</div>
+        <h3 class="mb-2" style="color:var(--cyan)">text-embedding-3-small</h3>
+        <div style="font-size:12.5px;color:var(--muted);line-height:1.7">
+          Full batch sent in one API call via<br/>
+          <code style="color:var(--cyan)">AsyncOpenAI.embeddings.create(input=texts)</code><br/>
+          Returns <strong>1536-dimensional</strong> float vectors.<br/>
+          Requires valid <code>OPENAI_API_KEY</code>.
+        </div>
+      </div>
+      <div class="card">
+        <div class="eyebrow mb-2">Critical Rule</div>
+        <h3 class="mb-2" style="color:var(--orange)">Provider Must Match</h3>
+        <div style="font-size:12.5px;color:var(--muted);line-height:1.7">
+          You <strong>must use the same</strong> embedding provider at index time and query time.<br/>
+          768-dim vectors cannot be compared to 1536-dim vectors — ChromaDB will error.<br/>
+          Provider saved in <code>rag_configs.embedding_provider</code>.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ WORKFLOW D: AGENT 6 NODES ══════════════ -->
+  <div class="section">
+    <div class="flex items-center gap-2 mb-3">
+      <div class="section-accent" style="background:var(--orange)"></div>
+      <div class="eyebrow" style="margin:0">Section 05 · Workflow D — The Core</div>
+    </div>
+    <h2>6-Node Agent Pipeline — POST /agent/ask</h2>
+    <p class="sub mb-4">Every LLM call, retrieval step and decision that fires when you hit "Ask"</p>
+
+    <div class="node-pipe">
+
+      <!-- Node 1 -->
+      <div class="node-item">
+        <div class="node-line">
+          <div class="node-dot" style="background:var(--purple-soft);border:2px solid var(--purple);color:var(--purple);font-size:10px">N1</div>
+          <div class="node-connector"></div>
+        </div>
+        <div class="node-body">
+          <div class="card" style="border-left:3px solid var(--purple)">
+            <div class="flex justify-between items-center mb-2">
+              <div class="node-title" style="color:var(--purple)">Intent Analyzer</div>
+              <span class="badge badge-purple">LLM Call #1</span>
+            </div>
+            <div class="grid-2 gap-4">
+              <div>
+                <div class="node-desc mb-2"><strong>Input:</strong> raw question + use case name<br/>
+                <strong>Prompt:</strong> "Analyze this question. Return JSON with intent label, question_type, requires_citation, risk_sensitive"<br/>
+                <strong>Output written to:</strong> <code>state.intent</code>, <code>state.question_type</code>, <code>state.risk_sensitive</code></div>
+                <span class="node-method">_node_intent_analyzer(state, provider)</span>
+              </div>
+              <pre style="font-size:11px"><span class="hl-muted">// LLM returns JSON like:</span>
+{
+  <span class="hl-lime">"intent"</span>: <span class="hl-cyan">"damaged_delivery_inquiry"</span>,
+  <span class="hl-lime">"question_type"</span>: <span class="hl-cyan">"procedural"</span>,
+  <span class="hl-lime">"requires_citation"</span>: <span class="hl-purple">true</span>,
+  <span class="hl-lime">"risk_sensitive"</span>: <span class="hl-purple">false</span>
+}</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Node 2 -->
+      <div class="node-item">
+        <div class="node-line">
+          <div class="node-dot" style="background:var(--cyan-soft);border:2px solid var(--cyan);color:var(--cyan);font-size:10px">N2</div>
+          <div class="node-connector"></div>
+        </div>
+        <div class="node-body">
+          <div class="card" style="border-left:3px solid var(--cyan)">
+            <div class="flex justify-between items-center mb-2">
+              <div class="node-title" style="color:var(--cyan)">Retriever</div>
+              <span class="badge badge-cyan">Vector Search — NO LLM</span>
+            </div>
+            <div class="grid-2 gap-4">
+              <div>
+                <div class="node-desc mb-2"><strong>Input:</strong> question text + top_k from rag config<br/>
+                <strong>Step 1:</strong> fast-path check — if ChromaDB collection is empty → return [] immediately<br/>
+                <strong>Step 2:</strong> embed question using saved <code>rag_config.embedding_provider</code><br/>
+                <strong>Step 3:</strong> <code>collection.query(query_embedding, n_results=top_k)</code><br/>
+                <strong>Output:</strong> list of ChunkResult with score, filename, text_preview</div>
+                <span class="node-method">RagService.retrieve_for_agent()</span>
+              </div>
+              <pre style="font-size:11px"><span class="hl-muted">// Returned chunk example:</span>
+{
+  <span class="hl-lime">"chunk_id"</span>: <span class="hl-cyan">"3dc6927a-..."</span>,
+  <span class="hl-lime">"filename"</span>: <span class="hl-cyan">"shopeasy_policy.txt"</span>,
+  <span class="hl-lime">"score"</span>: <span class="hl-purple">0.8741</span>,
+  <span class="hl-lime">"text_preview"</span>: <span class="hl-cyan">"If you receive a
+  damaged or wrong item,
+  contact support@..."</span>
+}</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Node 3 -->
+      <div class="node-item">
+        <div class="node-line">
+          <div class="node-dot" style="background:var(--lime-soft);border:2px solid var(--lime);color:var(--lime);font-size:10px">N3</div>
+          <div class="node-connector"></div>
+        </div>
+        <div class="node-body">
+          <div class="card" style="border-left:3px solid var(--lime)">
+            <div class="flex justify-between items-center mb-2">
+              <div class="node-title" style="color:var(--lime)">Answer Generator</div>
+              <span class="badge badge-lime">LLM Call #2 — Most Important</span>
+            </div>
+            <div class="grid-2 gap-4">
+              <div>
+                <div class="node-desc mb-2">
+                  <strong>If no chunks retrieved:</strong> sets draft = "I could not find enough context…" and skips.<br/>
+                  <strong>System prompt:</strong> includes answer_style instruction (concise / detailed / support-agent / legal-review / technical-runbook)<br/>
+                  <strong>User prompt:</strong> formatted context blocks [1] filename (score: 0.87)\n{text} + question<br/>
+                  <strong>Output:</strong> <code>state.draft_answer</code>, <code>state.citations[]</code>
+                </div>
+                <span class="node-method">_node_answer_generator(state, provider)</span>
+              </div>
+              <pre style="font-size:11px"><span class="hl-muted">// Context injected as:</span>
+[<span class="hl-purple">1</span>] shopeasy_policy.txt (<span class="hl-purple">0.87</span>)
+If you receive a damaged
+or wrong item, contact...
+
+[<span class="hl-purple">2</span>] shopeasy_policy.txt (<span class="hl-purple">0.81</span>)
+Refund methods: original
+payment method: full...</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Node 4 -->
+      <div class="node-item">
+        <div class="node-line">
+          <div class="node-dot" style="background:var(--orange-soft);border:2px solid var(--orange);color:var(--orange);font-size:10px">N4</div>
+          <div class="node-connector"></div>
+        </div>
+        <div class="node-body">
+          <div class="card" style="border-left:3px solid var(--orange)">
+            <div class="flex justify-between items-center mb-2">
+              <div class="node-title" style="color:var(--orange)">Grounding Verifier</div>
+              <span class="badge badge-orange">LLM Call #3 — Quality Gate</span>
+            </div>
+            <div class="node-desc mb-2">
+              Checks whether the draft answer is actually supported by the retrieved context (faithfulness).<br/>
+              Uses only the first 3 chunks + first 500 chars of the answer to keep tokens low.<br/>
+              Returns a 0–1 score. If it fails/times out, estimates 0.75 so the pipeline continues.
+            </div>
+            <pre style="font-size:11px"><span class="hl-muted">// LLM prompt output:</span>
+{ <span class="hl-lime">"faithfulness"</span>: <span class="hl-purple">0.92</span>, <span class="hl-lime">"unsupported_claims"</span>: [], <span class="hl-lime">"status"</span>: <span class="hl-cyan">"passed"</span> }</pre>
+            <span class="node-method">_node_grounding_verifier(state, provider)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Node 5 -->
+      <div class="node-item">
+        <div class="node-line">
+          <div class="node-dot" style="background:rgba(255,107,107,.1);border:2px solid var(--red);color:var(--red);font-size:10px">N5</div>
+          <div class="node-connector"></div>
+        </div>
+        <div class="node-body">
+          <div class="card" style="border-left:3px solid var(--red)">
+            <div class="flex justify-between items-center mb-2">
+              <div class="node-title" style="color:var(--red)">Risk Classifier</div>
+              <span class="badge badge-red">LLM Call #4 — Safety Gate</span>
+            </div>
+            <div class="node-desc mb-2">
+              Classifies the risk of a user acting on this answer:<br/>
+              <strong style="color:var(--lime)">low</strong> — informational, read-only (What is the return policy?)<br/>
+              <strong style="color:var(--orange)">medium</strong> — operational or business decision (Should we refund this customer?)<br/>
+              <strong style="color:var(--red)">high</strong> — legal, financial, destructive, privacy (How do I terminate this employee?)
+            </div>
+            <pre style="font-size:11px">{ <span class="hl-lime">"risk_level"</span>: <span class="hl-cyan">"low"</span>, <span class="hl-lime">"approval_required"</span>: <span class="hl-purple">false</span>, <span class="hl-lime">"risk_reason"</span>: <span class="hl-cyan">"Read-only policy question"</span> }</pre>
+            <span class="node-method">_node_risk_classifier(state, provider)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Node 6 -->
+      <div class="node-item">
+        <div class="node-line">
+          <div class="node-dot" style="background:rgba(255,217,61,.1);border:2px solid var(--yellow);color:var(--yellow);font-size:10px">N6</div>
+        </div>
+        <div class="node-body">
+          <div class="card" style="border-left:3px solid var(--yellow)">
+            <div class="flex justify-between items-center mb-2">
+              <div class="node-title" style="color:var(--yellow)">Final Responder</div>
+              <span class="badge" style="background:rgba(255,217,61,.1);color:var(--yellow);border:1px solid rgba(255,217,61,.2)">NO LLM — Pure Logic</span>
+            </div>
+            <div class="node-desc mb-2">
+              Copies <code>draft_answer</code> to <code>final_answer</code>. If <code>approval_required=true</code> and risk is high, appends an escalation warning banner to the bottom of the answer.<br/>
+              Then calls <code>_persist_run()</code> to write the full run to SQLite: agent_runs + agent_trace_steps + retrieved_chunks.
+            </div>
+            <span class="node-method">_node_final_responder(state)</span>
+            <span class="node-method" style="margin-left:8px;color:var(--purple)">_persist_run(state, provider)</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════ API REFERENCE TABLE ══════════════ -->
+  <div class="section">
+    <div class="flex items-center gap-2 mb-3">
+      <div class="section-accent" style="background:var(--yellow)"></div>
+      <div class="eyebrow" style="margin:0">Section 06</div>
+    </div>
+    <h2>Key Method Reference</h2>
+    <div class="card" style="padding:0;overflow:hidden">
+      <table>
+        <thead>
+          <tr>
+            <th>Screen triggers</th>
+            <th>Frontend method</th>
+            <th>API endpoint</th>
+            <th>Backend service</th>
+            <th>Data written</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Click <strong>Launch</strong></td>
+            <td><code>handleLaunch()</code></td>
+            <td><code>POST /usecases</code></td>
+            <td>—</td>
+            <td>use_cases row</td>
+          </tr>
+          <tr>
+            <td>Drop file + Upload</td>
+            <td><code>handleUpload()</code></td>
+            <td><code>POST /documents/upload/{id}</code></td>
+            <td>DocumentService.upload()</td>
+            <td>file on disk, documents row, N chunks rows</td>
+          </tr>
+          <tr>
+            <td>Click <strong>Index &amp; Apply</strong></td>
+            <td><code>runIndex()</code></td>
+            <td><code>POST /rag/index</code></td>
+            <td>RagService.index()</td>
+            <td>ChromaDB vectors, document.status=indexed</td>
+          </tr>
+          <tr>
+            <td>Save RAG Config</td>
+            <td><code>saveConfig()</code></td>
+            <td><code>POST /rag/config</code></td>
+            <td>RagService.save_config()</td>
+            <td>rag_configs row</td>
+          </tr>
+          <tr>
+            <td>Test Retrieval</td>
+            <td><code>runTest()</code></td>
+            <td><code>POST /rag/retrieve</code></td>
+            <td>RagService.retrieve()</td>
+            <td>nothing (read-only)</td>
+          </tr>
+          <tr>
+            <td>Click <strong>Ask</strong></td>
+            <td><code>handleAsk()</code></td>
+            <td><code>POST /agent/ask</code></td>
+            <td>AgentService.run() → 6 nodes</td>
+            <td>agent_runs + trace_steps + retrieved_chunks</td>
+          </tr>
+          <tr>
+            <td>Load Benchmarks</td>
+            <td><code>fetchBenchmarks()</code></td>
+            <td><code>GET /benchmarks/{id}</code></td>
+            <td>—</td>
+            <td>nothing (read-only)</td>
+          </tr>
+          <tr>
+            <td>Test Connection</td>
+            <td><code>testConnection()</code></td>
+            <td><code>POST /settings/test-connection</code></td>
+            <td>LLMProvider("openai").generate()</td>
+            <td>nothing (diagnostic only)</td>
+          </tr>
+          <tr>
+            <td>Test Ollama</td>
+            <td><code>testOllama()</code></td>
+            <td><code>POST /settings/test-ollama</code></td>
+            <td>LLMProvider("ollama").generate()</td>
+            <td>nothing (diagnostic only)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══════════════ EXAMPLE TEST ══════════════ -->
+  <div class="section">
+    <div class="flex items-center gap-2 mb-3">
+      <div class="section-accent" style="background:var(--lime)"></div>
+      <div class="eyebrow" style="margin:0">Section 07 · Live Example</div>
+    </div>
+    <h2>End-to-end Test — ShopEasy Scenario</h2>
+    <p class="sub mb-4">
+      Use case: <strong>ShopEasy Customer Support</strong> ·
+      Document: <strong>shopeasy_policy.txt</strong> ·
+      Provider: <strong>Ollama (llama3.2 + nomic-embed-text)</strong>
+    </p>
+
+    <div class="grid-2 gap-4 mb-4">
+      <div class="card">
+        <div class="eyebrow mb-3">What you type in the Agent screen</div>
+        <div style="background:#0a0a0c;border:1px solid var(--line);border-radius:10px;padding:14px 16px;font-size:13.5px;color:var(--text)">
+          My package arrived damaged. What should I do?
+        </div>
+        <div class="flex gap-2 mt-3" style="font-size:12px;color:var(--muted)">
+          <span>Provider: <strong style="color:var(--lime)">Ollama</strong></span>
+          <span>·</span>
+          <span>Use Case: <strong style="color:var(--text)">ShopEasy Customer Support</strong></span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="eyebrow mb-3">What fires behind the scenes</div>
+        <div class="flex-col gap-2" style="font-size:12px">
+          <div class="flex items-center gap-2"><span style="color:var(--purple);font-weight:700">N1</span> <span>Intent → <code>damaged_delivery_inquiry</code> · type: <code>procedural</code></span></div>
+          <div class="flex items-center gap-2"><span style="color:var(--cyan);font-weight:700">N2</span> <span>Embeds question with nomic-embed-text → queries ChromaDB → 4 chunks returned</span></div>
+          <div class="flex items-center gap-2"><span style="color:var(--lime);font-weight:700">N3</span> <span>llama3.2 reads 4 context chunks → generates answer with [1][2] citations</span></div>
+          <div class="flex items-center gap-2"><span style="color:var(--orange);font-weight:700">N4</span> <span>Faithfulness check → <code>0.92</code> (answer is well-grounded in context)</span></div>
+          <div class="flex items-center gap-2"><span style="color:var(--red);font-weight:700">N5</span> <span>Risk → <code>low</code> (just informational policy lookup)</span></div>
+          <div class="flex items-center gap-2"><span style="color:var(--yellow);font-weight:700">N6</span> <span>Final answer assembled, run saved to SQLite</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mock UI Output -->
+    <div class="mock-ui">
+      <div class="mock-bar">
+        <div class="mock-dot" style="background:#ff5f57"></div>
+        <div class="mock-dot" style="background:#febc2e"></div>
+        <div class="mock-dot" style="background:#28c840"></div>
+        <div class="mock-url">localhost:5173 · Agent — ShopEasy Customer Support</div>
+      </div>
+      <div class="mock-content">
+        <!-- Question bubble -->
+        <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+          <div class="bubble bubble-user">My package arrived damaged. What should I do?</div>
+        </div>
+
+        <!-- Answer bubble -->
+        <div style="display:flex;justify-content:flex-start;margin-bottom:4px">
+          <div class="bubble bubble-ai" style="max-width:90%">
+            <div style="font-size:11px;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:6px">
+              <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--lime)"></span>
+              ShopEasy Customer Support · via Ollama llama3.2
+            </div>
+            <p style="margin-bottom:10px">I'm sorry to hear your package arrived damaged! Here's exactly what to do, step by step:</p>
+            <ol style="padding-left:18px;line-height:1.9;font-size:13px">
+              <li><strong>Act quickly</strong> — you must contact us within <strong>48 hours</strong> of delivery. [1]</li>
+              <li>Email <strong>support@shopeasy.com</strong> with photos of the damaged item clearly showing the damage. [1]</li>
+              <li>We will review your report and arrange a <strong>free return pickup</strong> at no cost to you.</li>
+              <li>You'll then choose your resolution: a <strong>full replacement</strong> of the same item, or a <strong>full refund</strong> to your original payment method. [2]</li>
+            </ol>
+            <p style="margin-top:10px;font-size:12.5px;color:#8888aa">No questions asked — damaged item claims are always resolved in your favour within ShopEasy's policy. [1]</p>
+            <div style="margin-top:12px;padding-top:10px;border-top:1px solid #1e1e28">
+              <div style="font-size:10.5px;color:var(--muted);margin-bottom:5px">Sources</div>
+              <span class="citation-chip">📄 shopeasy_policy.txt · [1]</span>
+              <span class="citation-chip">📄 shopeasy_policy.txt · [2]</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Risk + metrics row -->
+        <div class="metrics-row" style="margin-bottom:16px">
+          <div class="metric-chip">
+            <div class="metric-val"><span class="risk-pill risk-low">LOW</span></div>
+            <div class="metric-lbl">Risk Level</div>
+          </div>
+          <div class="metric-chip">
+            <div class="metric-val" style="color:var(--lime)">0.92</div>
+            <div class="metric-lbl">Faithfulness</div>
+          </div>
+          <div class="metric-chip">
+            <div class="metric-val" style="color:var(--cyan)">4</div>
+            <div class="metric-lbl">Chunks Used</div>
+          </div>
+          <div class="metric-chip">
+            <div class="metric-val" style="color:var(--orange)">3.8s</div>
+            <div class="metric-lbl">Total Latency</div>
+          </div>
+          <div class="metric-chip">
+            <div class="metric-val" style="color:var(--purple)">342</div>
+            <div class="metric-lbl">Output Tokens</div>
+          </div>
+          <div class="metric-chip">
+            <div class="metric-val" style="color:var(--yellow)">$0.00</div>
+            <div class="metric-lbl">Cost (Ollama)</div>
+          </div>
+        </div>
+
+        <!-- Agent trace -->
+        <div style="border-top:1px solid #1a1a28;padding-top:14px">
+          <div style="font-size:11px;font-weight:600;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Agent Trace</div>
+
+          <div class="trace-row">
+            <div class="trace-icon" style="background:rgba(168,224,99,.15);color:var(--lime)">✓</div>
+            <div class="trace-name" style="color:var(--purple)">intent_analyzer</div>
+            <div class="trace-detail">Intent: <strong>damaged_delivery_inquiry</strong> · type: procedural · risk_sensitive: false</div>
+            <div class="trace-ms">212 ms</div>
+          </div>
+          <div class="trace-row">
+            <div class="trace-icon" style="background:rgba(168,224,99,.15);color:var(--lime)">✓</div>
+            <div class="trace-name" style="color:var(--cyan)">retriever</div>
+            <div class="trace-detail">Retrieved <strong>4 chunks</strong> · top score: 0.87 · source: shopeasy_policy.txt</div>
+            <div class="trace-ms">344 ms</div>
+          </div>
+          <div class="trace-row">
+            <div class="trace-icon" style="background:rgba(168,224,99,.15);color:var(--lime)">✓</div>
+            <div class="trace-name" style="color:var(--lime)">answer_generator</div>
+            <div class="trace-detail"><strong>342 tokens</strong> generated · answer_style: support-agent</div>
+            <div class="trace-ms">2,840 ms</div>
+          </div>
+          <div class="trace-row">
+            <div class="trace-icon" style="background:rgba(168,224,99,.15);color:var(--lime)">✓</div>
+            <div class="trace-name" style="color:var(--orange)">grounding_verifier</div>
+            <div class="trace-detail">Faithfulness: <strong>0.92</strong> · status: passed · 0 unsupported claims</div>
+            <div class="trace-ms">680 ms</div>
+          </div>
+          <div class="trace-row">
+            <div class="trace-icon" style="background:rgba(168,224,99,.15);color:var(--lime)">✓</div>
+            <div class="trace-name" style="color:var(--red)">risk_classifier</div>
+            <div class="trace-detail">Risk: <strong>low</strong> · "Read-only policy lookup, no operational action required"</div>
+            <div class="trace-ms">541 ms</div>
+          </div>
+          <div class="trace-row">
+            <div class="trace-icon" style="background:rgba(168,224,99,.15);color:var(--lime)">✓</div>
+            <div class="trace-name" style="color:var(--yellow)">final_responder</div>
+            <div class="trace-detail">Risk: low · Citations: 4 · no escalation required · run persisted to SQLite</div>
+            <div class="trace-ms">0 ms</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- What changes if different scenarios -->
+    <div class="card mt-4">
+      <h3 class="mb-3">How the output differs across the 3 test scenarios</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Question</th>
+            <th>Use Case</th>
+            <th>Answer Style</th>
+            <th>Expected Risk</th>
+            <th>Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>"What is the return window for electronics?"</td>
+            <td>ShopEasy Support</td>
+            <td><span class="badge badge-cyan">support-agent</span></td>
+            <td><span class="risk-pill risk-low">LOW</span></td>
+            <td>Pure policy lookup, read-only</td>
+          </tr>
+          <tr>
+            <td>"What is the severance pay if I am laid off after 3 years?"</td>
+            <td>TechCorp HR</td>
+            <td><span class="badge badge-purple">detailed</span></td>
+            <td><span class="risk-pill risk-high">HIGH</span></td>
+            <td>Financial + legal implication for the company</td>
+          </tr>
+          <tr>
+            <td>"The DB is down and API is returning 500s. What do I do?"</td>
+            <td>OpsBot Runbook</td>
+            <td><span class="badge badge-orange">technical-runbook</span></td>
+            <td><span class="risk-pill risk-high">HIGH</span></td>
+            <td>Destructive action: promoting a replica affects production</td>
+          </tr>
+          <tr>
+            <td>"How many days of annual leave do I get?"</td>
+            <td>TechCorp HR</td>
+            <td><span class="badge badge-purple">detailed</span></td>
+            <td><span class="risk-pill risk-low">LOW</span></td>
+            <td>Informational, no action required</td>
+          </tr>
+          <tr>
+            <td>"How do I roll back the deployment?"</td>
+            <td>OpsBot Runbook</td>
+            <td><span class="badge badge-orange">technical-runbook</span></td>
+            <td><span class="risk-pill risk-medium">MEDIUM</span></td>
+            <td>Operational action but not irreversible</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══════════════ FOOTER ══════════════ -->
+  <div class="divider"></div>
+  <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:40px;flex-wrap:wrap;gap:12px">
+    <div>
+      <div style="font-size:13px;font-weight:600">Agentic RAG Solution Studio</div>
+      <div style="font-size:12px;color:var(--muted)">FastAPI · SQLite · ChromaDB · React · LangGraph-style Agent · Ollama / OpenAI</div>
+    </div>
+    <div class="flex gap-2">
+      <span class="badge badge-lime">6-Node Agent</span>
+      <span class="badge badge-cyan">REST API</span>
+      <span class="badge badge-purple">Vector Search</span>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

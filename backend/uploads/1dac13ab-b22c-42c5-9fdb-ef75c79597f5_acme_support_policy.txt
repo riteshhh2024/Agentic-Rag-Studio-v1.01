@@ -1,0 +1,26 @@
+Acme Corp Customer Support Policy
+
+1. Refund Policy
+Customers may request a full refund within 30 days of purchase. Refunds are processed
+within 5-7 business days. To initiate a refund, contact support@acme.com with your
+order number and reason for return.
+
+2. Escalation Procedure
+If a customer issue cannot be resolved within 24 hours, the support agent must escalate
+the ticket to the L2 team using the escalation form in the internal portal. The L2 team
+will respond within 4 business hours.
+
+3. Warranty Claims
+All hardware products come with a 1-year limited warranty. To file a warranty claim,
+customers must provide proof of purchase and a description of the defect. Approved claims
+receive a replacement unit within 10 business days.
+
+4. Data Privacy
+Acme Corp is committed to protecting customer data. All personal information is stored
+encrypted and never shared with third parties without explicit consent. Customers may
+request data deletion at any time by contacting privacy@acme.com.
+
+5. Service Level Agreements
+Enterprise customers have guaranteed response times of 2 hours for critical issues and
+8 hours for standard issues. SLA violations trigger automatic escalation to the account
+manager and a service credit of 10% of the monthly fee.

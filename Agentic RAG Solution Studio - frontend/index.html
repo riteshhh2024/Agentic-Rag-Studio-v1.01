@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agentic RAG Solution Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=Open+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="root"></div>
+
+  <!-- React + ReactDOM (UMD) -->
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone@7.23.6/babel.min.js" crossorigin></script>
+
+  <!-- API Client (plain JS — no JSX needed) -->
+  <script src="js/api.js"></script>
+
+  <!-- Shared UI primitives (must load before screens) -->
+  <script type="text/babel" src="components/ui.jsx" data-presets="react"></script>
+  <script type="text/babel" src="components/chrome.jsx" data-presets="react"></script>
+
+  <!-- Screens -->
+  <script type="text/babel" src="screens/dashboard.jsx" data-presets="react"></script>
+  <script type="text/babel" src="screens/usecases.jsx" data-presets="react"></script>
+  <script type="text/babel" src="screens/knowledge.jsx" data-presets="react"></script>
+  <script type="text/babel" src="screens/rag.jsx" data-presets="react"></script>
+  <script type="text/babel" src="screens/agent.jsx" data-presets="react"></script>
+  <script type="text/babel" src="screens/evaluation.jsx" data-presets="react"></script>
+  <script type="text/babel" src="screens/benchmarks.jsx" data-presets="react"></script>
+  <script type="text/babel" src="screens/report.jsx" data-presets="react"></script>
+  <script type="text/babel" src="screens/settings.jsx" data-presets="react"></script>
+  <script type="text/babel" src="screens/login.jsx" data-presets="react"></script>
+  <script type="text/babel" src="screens/onboarding.jsx" data-presets="react"></script>
+
+  <!-- Root App -->
+  <script type="text/babel" data-presets="react">
+    const App = () => {
+      // ── Auth state ────────────────────────────────────────────────────────
+      // user = null → show Login;  user = { studioId } → show main app
+      const [user, setUser] = React.useState(() => {
+        try {
+          const saved = sessionStorage.getItem("rag_studio_user");
+          return saved ? JSON.parse(saved) : null;
+        } catch { return null; }
+      });
+
+      const handleLogin = (u) => {
+        sessionStorage.setItem("rag_studio_user", JSON.stringify(u));
+        setUser(u);
+      };
+
+      const handleLogout = () => {
+        sessionStorage.removeItem("rag_studio_user");
+        setUser(null);
+      };
+
+      // ── App state ─────────────────────────────────────────────────────────
+      const [page, setPage] = React.useState("dashboard");
+      const [activeUseCase, setActiveUseCase] = React.useState(null);
+
+      const handleNav = (id, uc) => {
+        setPage(id);
+        if (uc !== undefined) setActiveUseCase(uc);
+      };
+
+      // ── Login gate ────────────────────────────────────────────────────────
+      if (!user) {
+        return <Login onLogin={handleLogin} />;
+      }
+
+      const screenProps = { activeUseCase, onUseCaseChange: setActiveUseCase, onNav: handleNav };
+
+      const screens = {
+        dashboard:  <Dashboard  onNav={handleNav} activeUseCase={activeUseCase} />,
+        usecases:   <UseCases   {...screenProps} />,
+        knowledge:  <Knowledge  {...screenProps} />,
+        rag:        <RagConfig  {...screenProps} />,
+        agent:      <Agent      {...screenProps} />,
+        eval:       <Evaluation {...screenProps} />,
+        bench:      <Benchmarks {...screenProps} />,
+        report:     <Report     {...screenProps} />,
+        settings:   <Settings   {...screenProps} />,
+        onboarding: <Onboarding {...screenProps} />,
+      };
+
+      return (
+        <div className="app">
+          <Sidebar active={page} onNav={handleNav} />
+          <main className="main">
+            <Header active={page} activeUseCase={activeUseCase} user={user} onLogout={handleLogout} />
+            {screens[page] || screens.dashboard}
+          </main>
+        </div>
+      );
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById("root"));
+    root.render(<App />);
+  </script>
+</body>
+</html>

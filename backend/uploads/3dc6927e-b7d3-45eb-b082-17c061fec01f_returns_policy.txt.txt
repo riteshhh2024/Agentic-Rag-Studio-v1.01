@@ -1,0 +1,19 @@
+ Acme Returns and Warranty Policy
+
+  Standard Returns:
+  Customers may return any item within 30 days of purchase for a full refund.
+  Items must be in original condition with proof of purchase.
+
+  Extended Returns for Damaged Goods:
+  If an item arrives damaged, customers have 60 days to file a claim.
+  Damaged item returns require photo evidence submitted via support@acme.com.
+
+  Warranty Coverage:
+  All hardware products include a 12-month limited warranty.
+  Warranty claims are processed within 10 business days.
+  Replacement units are shipped at no cost to the customer.
+
+  Refund Processing:
+  Standard refunds are processed in 5-7 business days.
+  Express refund (24h) is available for orders over $200.
+  Refunds are issued to the original payment method only.
