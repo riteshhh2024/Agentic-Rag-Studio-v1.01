@@ -18,8 +18,9 @@ OLLAMA_DEFAULT_EMBED_MODEL = "nomic-embed-text"
 
 
 class EmbeddingProvider:
-    def __init__(self, provider: str = "openai"):
+    def __init__(self, provider: str = "openai", model: str | None = None):
         self.provider = provider
+        self.model_override = model
 
     async def embed(self, text: str) -> list[float]:
         return await self._embed_texts([text])
@@ -33,25 +34,26 @@ class EmbeddingProvider:
             client = AsyncOpenAI(api_key=settings.openai_api_key)
             response = await client.embeddings.create(
                 input=texts,
-                model=settings.default_embedding_model,
+                model=self.model_override or settings.default_embedding_model,
             )
             embeddings = [e.embedding for e in response.data]
             return embeddings if batch else embeddings[0]
 
         if self.provider == "ollama":
-            return await self._ollama_embed(texts, batch)
+            return await self._ollama_embed(texts, batch, self.model_override)
 
         raise ValueError(f"Unsupported embedding provider: {self.provider}")
 
-    async def _ollama_embed(self, texts: list[str], batch: bool) -> list | list[list]:
+    async def _ollama_embed(self, texts: list[str], batch: bool, model: str | None = None) -> list | list[list]:
         """Ollama /api/embeddings — one request per text (no batch endpoint)."""
         import httpx
+        embed_model = model or OLLAMA_DEFAULT_EMBED_MODEL
         results = []
         async with httpx.AsyncClient(timeout=30.0) as client:
             for text in texts:
                 resp = await client.post(
                     OLLAMA_EMBED_URL,
-                    json={"model": OLLAMA_DEFAULT_EMBED_MODEL, "prompt": text},
+                    json={"model": embed_model, "prompt": text},
                 )
                 resp.raise_for_status()
                 results.append(resp.json()["embedding"])
@@ -59,15 +61,16 @@ class EmbeddingProvider:
 
 
 class LLMProvider:
-    def __init__(self, provider: str = "openai"):
+    def __init__(self, provider: str = "openai", model: str | None = None):
         self.provider = provider
+        self.model_override = model  # set once, used for all generate() calls
 
     async def generate(self, system_prompt: str, user_prompt: str, model: str | None = None) -> dict:
         """Returns dict with: content, input_tokens, output_tokens, latency_ms, estimated_cost_usd"""
         start = time.time()
 
         if self.provider == "openai":
-            effective_model = model or settings.default_model
+            effective_model = model or self.model_override or settings.default_model
             content, in_tok, out_tok = await self._openai_generate(system_prompt, user_prompt, effective_model)
             cost = (
                 (in_tok / 1000) * settings.token_cost_input_per_1k +
@@ -75,7 +78,7 @@ class LLMProvider:
             )
 
         elif self.provider == "ollama":
-            effective_model = model or OLLAMA_DEFAULT_CHAT_MODEL
+            effective_model = model or self.model_override or OLLAMA_DEFAULT_CHAT_MODEL
             content, in_tok, out_tok = await self._ollama_generate(system_prompt, user_prompt, effective_model)
             cost = 0.0  # local model — no token cost
 

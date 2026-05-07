@@ -1,7 +1,8 @@
-// Dashboard / Overview
+// Dashboard — Pipeline lifecycle with live stages
 const Dashboard = ({ onNav, activeUseCase }) => {
   const [usecases, setUsecases] = React.useState([]);
-  const [loading, setLoading] = React.useState(true);
+  const [loading,  setLoading]  = React.useState(true);
+  const [progress, setProgress] = React.useState(null);
 
   React.useEffect(() => {
     API.usecases.list()
@@ -10,63 +11,95 @@ const Dashboard = ({ onNav, activeUseCase }) => {
       .finally(() => setLoading(false));
   }, []);
 
+  React.useEffect(() => {
+    if (!activeUseCase) { setProgress(null); return; }
+    API.usecases.progress(activeUseCase.id)
+      .then(setProgress)
+      .catch(() => setProgress(null));
+  }, [activeUseCase?.id]);
+
+  const currentStage = progress?.current_stage ?? (activeUseCase ? 1 : 0);
+  const stageLabel   = progress?.stages?.[currentStage - 1]?.name ?? (activeUseCase ? "Use Case Intake" : "Not started");
+  const totalDocs    = activeUseCase?.document_count ?? 0;
+  const totalRuns    = activeUseCase?.run_count ?? 0;
+
+  const STAGE_DEFS = [
+    { num: "01", name: "Use Case Intake",   desc: "Define problem & success criteria",  nav: "usecases"  },
+    { num: "02", name: "Knowledge Upload",  desc: "Parse · chunk · embed",               nav: "knowledge" },
+    { num: "03", name: "RAG Configuration", desc: "Retrieval & answer policy",           nav: "rag"       },
+    { num: "04", name: "Agentic Q&A",       desc: "Controlled multi-step workflow",      nav: "agent"     },
+    { num: "05", name: "Evaluation",        desc: "Faithfulness, latency, risk",         nav: "eval"      },
+    { num: "06", name: "Report",            desc: "Solution deliverable",                nav: "report"    },
+  ];
+
+  const getStageState = (idx) => {
+    if (!progress) return (!activeUseCase ? "" : idx === 0 ? "done" : "");
+    const s = progress.stages[idx];
+    if (!s) return "";
+    if (s.done) return "done";
+    if (idx === progress.current_stage) return "active";
+    return "";
+  };
+
   return (
     <div className="page">
       <div className="page-head" style={{ fontFamily: "\"JetBrains Mono\"" }}>
         <div>
-          <div className="eyebrow"><span className="glyph"></span> Overview · POC-2026-Q2</div>
-          <h1 className="h1">Build, evaluate, and present<br /><em>enterprise GenAI POCs</em></h1>
-          <p className="h1-sub">A solution-architect workspace for designing, tuning and evaluating agentic RAG proofs-of-concept — from customer intake to a customer-ready report.</p>
+          <div className="eyebrow"><span className="glyph"></span> Overview</div>
+          <h1 className="h1">Build, evaluate, and deploy<br /><em>enterprise RAG solutions</em></h1>
+          <p className="h1-sub">Design, tune and evaluate agentic RAG systems — from problem intake to a production-ready report.</p>
         </div>
         <div className="flex gap-2">
-          <button className="btn btn-ghost" onClick={() => onNav("agent")}>
-            <Icon name="play" size={12} /> Open Demo Workspace
-          </button>
-          <button className="btn btn-primary" onClick={() => onNav("usecases")}>
-            <Icon name="plus" size={13} /> Create New Use Case
+          <button className="btn btn-primary" onClick={() => onNav("onboarding")}>
+            <Icon name="plus" size={13} /> New Workspace
           </button>
         </div>
       </div>
 
       <div className="grid-4 mb-4">
-        <MetricCard label="Active Use Cases" value={String(usecases.length)} delta={`${usecases.length} total`} deltaTone="flat"
-          spark={<Sparkline data={[1, 1, 2, 2, 2, Math.max(1, usecases.length - 1), usecases.length]} />} />
-        <MetricCard label="Documents Indexed" value="—" unit="docs" delta="Upload to see" deltaTone="flat"
-          spark={<Sparkline data={[0, 0, 0, 0, 0, 0, 0]} color="var(--acc-cyan)" />} />
-        <MetricCard label="Evaluation Score" value="—" delta="Run eval to score" deltaTone="flat"
-          spark={<Sparkline data={[0, 0, 0, 0, 0, 0, 0]} />} />
-        <MetricCard label="Avg Latency" value="—" unit="sec" delta="Run agent to measure" deltaTone="flat"
-          spark={<Sparkline data={[0, 0, 0, 0, 0, 0, 0]} color="var(--acc-cyan)" />} />
+        <MetricCard label="Workspaces" value={String(usecases.length)} delta={`${usecases.length} total`} deltaTone="flat"
+          spark={<Sparkline data={[0, 0, 1, 1, 1, Math.max(1, usecases.length - 1), usecases.length]} />} />
+        <MetricCard label="Documents" value={String(totalDocs)} unit="docs" delta={activeUseCase ? "Active workspace" : "Select workspace"} deltaTone="flat"
+          spark={<Sparkline data={[0, 0, 0, 0, 0, 0, totalDocs]} color="var(--acc-cyan)" />} />
+        <MetricCard label="Agent Runs" value={String(totalRuns)} delta={activeUseCase ? "Active workspace" : "Select workspace"} deltaTone="flat"
+          spark={<Sparkline data={[0, 0, 0, 0, 0, 0, totalRuns]} />} />
+        <MetricCard label="Pipeline Stage" value={activeUseCase ? String(currentStage) : "—"} unit={activeUseCase ? "of 6" : ""}
+          delta={activeUseCase ? stageLabel : "Select a workspace"} deltaTone="flat"
+          spark={<Sparkline data={[0, 0, 1, 1, currentStage > 2 ? 2 : 0, currentStage > 3 ? 3 : 0, currentStage]} color="var(--acc-cyan)" />} />
       </div>
 
+      {/* Pipeline lifecycle rail */}
       <div className="card mb-4" style={{ padding: 0, overflow: "hidden" }}>
         <div style={{ padding: "16px 18px", borderBottom: "1px solid var(--line-soft)", display: "flex", alignItems: "center", justifyContent: "space-between", fontFamily: "\"JetBrains Mono\"" }}>
           <div>
-            <div className="card-title">POC Lifecycle</div>
+            <div className="card-title">Pipeline Lifecycle</div>
             <div className="card-sub mt-2">
-              {activeUseCase ? `Currently at step 1 — Use Case Intake · ${activeUseCase.name}` : "Create a use case to begin"}
+              {activeUseCase
+                ? progress
+                  ? `Stage ${currentStage}/6 — ${stageLabel} · ${activeUseCase.name}`
+                  : `Loading stages for ${activeUseCase.name}…`
+                : "Select a workspace to track progress"}
             </div>
           </div>
-          <div className="flex gap-2 items-center">
-            <Badge tone={activeUseCase ? "lime" : "default"}>{activeUseCase ? "In Progress" : "Not Started"}</Badge>
-          </div>
+          <Badge tone={!activeUseCase ? "default" : currentStage >= 6 ? "ok" : "lime"}>
+            {!activeUseCase ? "No Workspace" : currentStage >= 6 ? "Complete" : `Stage ${currentStage}/6`}
+          </Badge>
         </div>
         <div className="rail">
-          {[
-            { num: "01", name: "Use Case Intake", desc: "Customer problem & success criteria", state: activeUseCase ? "done" : "" },
-            { num: "02", name: "Knowledge Upload", desc: "Parse · chunk · embed", state: "" },
-            { num: "03", name: "RAG Configuration", desc: "Retrieval & answer policy", state: "" },
-            { num: "04", name: "Agentic Q&A", desc: "Controlled multi-step workflow", state: "" },
-            { num: "05", name: "Evaluation", desc: "Faithfulness, latency, risk", state: "" },
-            { num: "06", name: "POC Report", desc: "Customer deliverable", state: "" },
-          ].map((s) =>
-            <div key={s.num} className={`rail-step ${s.state}`}>
-              <div className="pip"></div>
-              <div className="num">{s.num}</div>
-              <div className="name">{s.name}</div>
-              <div className="desc">{s.desc}</div>
-            </div>
-          )}
+          {STAGE_DEFS.map((s, i) => {
+            const state     = getStageState(i);
+            const stageInfo = progress?.stages?.[i];
+            return (
+              <div key={s.num} className={`rail-step ${state}`}
+                style={{ cursor: activeUseCase ? "pointer" : "default" }}
+                onClick={() => activeUseCase && onNav(s.nav)}>
+                <div className="pip"></div>
+                <div className="num">{s.num}</div>
+                <div className="name">{s.name}</div>
+                <div className="desc">{stageInfo?.detail || s.desc}</div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -74,10 +107,10 @@ const Dashboard = ({ onNav, activeUseCase }) => {
         <div className="card" style={{ padding: 0 }}>
           <div className="card-head" style={{ padding: "16px 18px", marginBottom: 0, borderBottom: "1px solid var(--line-soft)" }}>
             <div>
-              <div className="card-title">Your Use Cases</div>
-              <div className="card-sub mt-2">{usecases.length} use case{usecases.length !== 1 ? "s" : ""} in this workspace</div>
+              <div className="card-title">Your Workspaces</div>
+              <div className="card-sub mt-2">{usecases.length} workspace{usecases.length !== 1 ? "s" : ""}</div>
             </div>
-            <button className="btn btn-ghost" onClick={() => onNav("usecases")}>
+            <button className="btn btn-ghost" onClick={() => onNav("onboarding")}>
               <Icon name="plus" size={12} /> New
             </button>
           </div>
@@ -85,27 +118,26 @@ const Dashboard = ({ onNav, activeUseCase }) => {
             <div style={{ padding: 24, textAlign: "center", color: "var(--fg-dim)", fontFamily: "var(--font-mono)", fontSize: 12 }}>Loading…</div>
           ) : usecases.length === 0 ? (
             <div style={{ padding: 32, textAlign: "center" }}>
-              <div style={{ color: "var(--fg-dim)", fontSize: 13, marginBottom: 12 }}>No use cases yet.</div>
-              <button className="btn btn-primary" onClick={() => onNav("usecases")}>
-                <Icon name="plus" size={13} /> Create your first use case
+              <div style={{ color: "var(--fg-dim)", fontSize: 13, marginBottom: 12 }}>No workspaces yet.</div>
+              <button className="btn btn-primary" onClick={() => onNav("onboarding")}>
+                <Icon name="plus" size={13} /> Create your first workspace
               </button>
             </div>
           ) : (
             <table className="table">
               <thead>
                 <tr>
-                  <th>Use Case</th>
-                  <th>Industry</th>
-                  <th>Style</th>
-                  <th>Docs</th>
-                  <th>Runs</th>
-                  <th>Created</th>
+                  <th>Workspace</th><th>Industry</th><th>Style</th><th>Docs</th><th>Runs</th><th>Created</th>
                 </tr>
               </thead>
               <tbody>
                 {usecases.map((uc) => (
-                  <tr key={uc.id} style={{ cursor: "pointer" }} onClick={() => onNav("usecases", uc)}>
-                    <td>{uc.name}</td>
+                  <tr key={uc.id} style={{ cursor: "pointer", background: activeUseCase?.id === uc.id ? "var(--acc-lime-soft)" : undefined }}
+                    onClick={() => onNav("usecases", uc)}>
+                    <td>
+                      {activeUseCase?.id === uc.id && <span style={{ display: "inline-block", width: 6, height: 6, borderRadius: "50%", background: "var(--acc-lime)", marginRight: 6, verticalAlign: "middle" }} />}
+                      {uc.name}
+                    </td>
                     <td className="muted">{uc.industry || "—"}</td>
                     <td><Badge tone="lime">{uc.answer_style}</Badge></td>
                     <td className="mono">{uc.document_count}</td>
@@ -136,12 +168,12 @@ const Dashboard = ({ onNav, activeUseCase }) => {
             </div>
             <div className="flex-col gap-3">
               {[
-                ["01", "Create a use case", "usecases"],
-                ["02", "Upload documents", "knowledge"],
-                ["03", "Configure RAG", "rag"],
-                ["04", "Ask the agent", "agent"],
-                ["05", "Run evaluation", "eval"],
-                ["06", "Generate report", "report"],
+                ["01", "Create a workspace", "onboarding"],
+                ["02", "Upload documents",   "knowledge" ],
+                ["03", "Configure RAG",      "rag"       ],
+                ["04", "Ask the agent",      "agent"     ],
+                ["05", "Run evaluation",     "eval"      ],
+                ["06", "Generate report",    "report"    ],
               ].map(([n, label, nav]) => (
                 <div key={n} style={{ display: "flex", gap: 12, fontSize: 12.5, alignItems: "center", cursor: "pointer" }}
                   onClick={() => onNav(nav)}>

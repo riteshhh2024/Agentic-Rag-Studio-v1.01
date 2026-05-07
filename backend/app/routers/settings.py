@@ -1,7 +1,10 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from typing import Optional
+from sqlalchemy.orm import Session
 from app.config import get_settings
+from app.database.db import get_db
+from app.database.models import AppSetting
 
 router = APIRouter(prefix="/settings", tags=["settings"])
 settings = get_settings()
@@ -78,6 +81,40 @@ async def get_settings_endpoint():
         ollama_default_model=settings.ollama_default_model,
         ollama_default_embed_model=settings.ollama_default_embed_model,
     )
+
+
+class ProviderConfig(BaseModel):
+    provider:    str  # openai | ollama | nvidia
+    chat_model:  str
+    embed_model: str
+
+
+@router.get("/provider-config", response_model=ProviderConfig)
+async def get_provider_config(db: Session = Depends(get_db)):
+    def _get(key: str, default: str) -> str:
+        row = db.query(AppSetting).filter(AppSetting.key == key).first()
+        return row.value if row else default
+    return ProviderConfig(
+        provider=   _get("active_provider",    "openai"),
+        chat_model= _get("active_chat_model",  "gpt-4o-mini"),
+        embed_model=_get("active_embed_model", "text-embedding-3-small"),
+    )
+
+
+@router.post("/provider-config", response_model=ProviderConfig)
+async def save_provider_config(payload: ProviderConfig, db: Session = Depends(get_db)):
+    for key, value in [
+        ("active_provider",    payload.provider),
+        ("active_chat_model",  payload.chat_model),
+        ("active_embed_model", payload.embed_model),
+    ]:
+        row = db.query(AppSetting).filter(AppSetting.key == key).first()
+        if row:
+            row.value = value
+        else:
+            db.add(AppSetting(key=key, value=value))
+    db.commit()
+    return payload
 
 
 @router.post("/test-ollama", response_model=ConnectionTestResponse)

@@ -92,6 +92,7 @@ class EvaluationService:
                     usecase_id=payload.usecase_id,
                     question=gq.question,
                     provider=payload.provider,
+                    model=payload.model,
                 ))
                 faithfulness = 0.8  # placeholder; real scoring uses LLM judge
                 answer_relevance = 0.8

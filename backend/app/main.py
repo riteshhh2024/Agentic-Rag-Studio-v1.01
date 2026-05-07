@@ -6,7 +6,7 @@ import os
 
 from app.config import get_settings
 from app.database.db import init_db
-from app.routers import health, usecases, documents, rag, agent, evaluation, reports, benchmarks
+from app.routers import health, usecases, documents, rag, agent, evaluation, reports, benchmarks, auth
 from app.routers import settings as settings_router
 
 settings = get_settings()
@@ -22,7 +22,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Agentic RAG Solution Studio",
-    description="A solution-architect workbench for designing, tuning, and evaluating enterprise GenAI POCs.",
+    description="A solution-architect workbench for designing, tuning, and evaluating enterprise RAG systems.",
     version="0.1.0",
     lifespan=lifespan,
 )
@@ -36,6 +36,7 @@ app.add_middleware(
 )
 
 # API routers
+app.include_router(auth.router)
 app.include_router(health.router)
 app.include_router(usecases.router)
 app.include_router(documents.router)
@@ -46,7 +47,7 @@ app.include_router(reports.router)
 app.include_router(benchmarks.router)
 app.include_router(settings_router.router)
 
-# Serve frontend static files (optional — frontend can be opened directly)
+# Serve frontend static files
 frontend_dir = os.path.join(os.path.dirname(__file__), "..", "..", "Agentic RAG Solution Studio - frontend")
 if os.path.isdir(frontend_dir):
     app.mount("/", StaticFiles(directory=frontend_dir, html=True), name="frontend")

@@ -1,5 +1,5 @@
 // Agent Workspace — wired to real API
-const Agent = ({ activeUseCase, onNav }) => {
+const Agent = ({ activeUseCase, onNav, providerConfig }) => {
   const usecaseId = activeUseCase?.id;
 
   // ── conversation state ────────────────────────────────────────────────────
@@ -58,7 +58,8 @@ const Agent = ({ activeUseCase, onNav }) => {
       const res = await API.agent.ask({
         usecase_id: usecaseId,
         question,
-        provider: "openai",
+        provider:   providerConfig?.provider   || "openai",
+        model:      providerConfig?.chat_model || null,
         rag_config: { top_k: 5, reranking: false, citation_required: true },
       });
 

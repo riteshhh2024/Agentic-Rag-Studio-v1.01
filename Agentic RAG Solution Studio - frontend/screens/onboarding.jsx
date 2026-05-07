@@ -1,4 +1,4 @@
-// Onboarding Wizard — 4-step setup flow, wired to real API
+// Onboarding Wizard — 4-step workspace creation flow
 const Onboarding = ({ onNav, onUseCaseChange }) => {
   const [step,      setStep]      = useState(0);
   const [launching, setLaunching] = useState(false);
@@ -6,33 +6,35 @@ const Onboarding = ({ onNav, onUseCaseChange }) => {
 
   const [data, setData] = useState({
     type:       "support",
-    name:       "Acme Support Knowledge Assistant",
-    industry:   "Consumer Internet / SaaS",
-    problem:    "Support agents spend too much time searching policy documents, troubleshooting guides, and escalation SOPs.",
-    users:      "Customer support agents and support team leads",
-    sources:    ["PDFs", "Markdown", "DOCX", "Internal SOPs"],
-    style:      "Support-Agent Tone",
+    name:       "",
+    industry:   "",
+    problem:    "",
+    users:      "",
+    sources:    [],
+    style:      "Concise",
     citation:   true,
-    escalation: true,
+    escalation: false,
     latency:    "Under 3 seconds",
     grounding:  "High",
   });
 
   const set = (k, v) => setData(d => ({ ...d, [k]: v }));
-  const toggleSrc = (s) => set("sources", data.sources.includes(s) ? data.sources.filter(x => x !== s) : [...data.sources, s]);
+  const toggleSrc = (s) => set("sources", data.sources.includes(s)
+    ? data.sources.filter(x => x !== s)
+    : [...data.sources, s]);
 
   const steps = [
-    { num: "01", label: "Use Case Type" },
-    { num: "02", label: "Customer Context" },
-    { num: "03", label: "Requirements" },
-    { num: "04", label: "Review & Launch" },
+    { num: "01", label: "Solution Type"     },
+    { num: "02", label: "Context"           },
+    { num: "03", label: "Requirements"      },
+    { num: "04", label: "Review & Launch"   },
   ];
 
-  const useCases = [
+  const solutionTypes = [
     { id: "support",  title: "Customer Support Knowledge Assistant", desc: "Policy, FAQ, troubleshooting, and support workflows.",       icon: "bot"      },
     { id: "contract", title: "Enterprise Contract Intelligence",     desc: "Contracts, clauses, risk review, and structured extraction.", icon: "shield"   },
     { id: "docs",     title: "Technical Documentation Copilot",      desc: "API docs, deployment guides, runbooks, developer support.",   icon: "file"     },
-    { id: "custom",   title: "Custom Enterprise RAG POC",            desc: "Start from a blank solution architecture.",                  icon: "sparkles" },
+    { id: "custom",   title: "Custom RAG Solution",                  desc: "Start from a blank solution architecture.",                  icon: "sparkles" },
   ];
 
   const next = () => setStep(s => Math.min(3, s + 1));
@@ -43,20 +45,20 @@ const Onboarding = ({ onNav, onUseCaseChange }) => {
     setError(null);
     try {
       const styleMap = {
-        "Concise": "concise",
-        "Detailed": "detailed",
-        "Support-Agent Tone": "support",
-        "Technical Tone": "technical",
+        "Concise":      "concise",
+        "Detailed":     "detailed",
+        "Support Tone": "support",
+        "Technical":    "technical",
       };
       const payload = {
-        name:             data.name.trim() || "New POC",
+        name:             data.name.trim() || "New Workspace",
         industry:         data.industry.trim() || null,
-        business_problem: data.problem.trim(),
+        business_problem: data.problem.trim() || "Not specified",
         target_users:     data.users.split(",").map(u => u.trim()).filter(Boolean),
         document_types:   data.sources,
         success_criteria: [
           data.citation   ? "Citation required on all answers" : "Citation optional",
-          data.escalation ? "High-risk queries escalated to Tier-2" : null,
+          data.escalation ? "High-risk queries escalated" : null,
           `Latency: ${data.latency.toLowerCase()}`,
           `Grounding: ${data.grounding}`,
         ].filter(Boolean),
@@ -72,14 +74,12 @@ const Onboarding = ({ onNav, onUseCaseChange }) => {
     }
   };
 
-  const handleSample = () => {
-    if (onNav) onNav("dashboard");
-  };
-
   return (
     <div style={{
       minHeight: "100vh",
-      background: `radial-gradient(1200px 600px at 80% -10%, var(--grad-1), transparent 60%), radial-gradient(900px 500px at -10% 100%, var(--grad-2), transparent 60%), var(--bg-base)`,
+      background: `radial-gradient(1200px 600px at 80% -10%, var(--grad-1), transparent 60%),
+                   radial-gradient(900px 500px at -10% 100%, var(--grad-2), transparent 60%),
+                   var(--bg-base)`,
       display: "flex", flexDirection: "column",
     }}>
       {/* Top bar */}
@@ -95,26 +95,24 @@ const Onboarding = ({ onNav, onUseCaseChange }) => {
           </div>
           <div>
             <div style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: "-0.01em" }}>Agentic RAG Studio</div>
-            <div style={{ fontSize: 11, color: "var(--text-muted)" }}>Enterprise GenAI POC Builder</div>
+            <div style={{ fontSize: 11, color: "var(--text-muted)" }}>Enterprise RAG Solution Builder</div>
           </div>
         </div>
-        <button className="btn btn-ghost" onClick={handleSample}>
-          <Icon name="zap" size={12} /> Load Sample POC
+        <button className="btn btn-ghost" onClick={() => { if (onNav) onNav("home"); }}>
+          Skip for now
         </button>
       </div>
 
       {/* Step progress */}
       <div style={{ padding: "28px 32px 0", maxWidth: 1080, width: "100%", margin: "0 auto" }}>
-        <div className="eyebrow" style={{ marginBottom: 12 }}><span className="glyph"></span> Workspace Setup · Step {step + 1} of 4</div>
+        <div className="eyebrow" style={{ marginBottom: 12 }}><span className="glyph"></span> New Workspace · Step {step + 1} of 4</div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginBottom: 8 }}>
           {steps.map((s, i) => (
             <div key={s.num} style={{
-              padding: "10px 14px",
-              borderRadius: 8,
+              padding: "10px 14px", borderRadius: 8,
               background: i === step ? "var(--bg-card-hi)" : "transparent",
               border: `1px solid ${i <= step ? "var(--acc-lime-line)" : "var(--line-soft)"}`,
-              opacity: i > step ? 0.55 : 1,
-              transition: "all 200ms",
+              opacity: i > step ? 0.55 : 1, transition: "all 200ms",
             }}>
               <div style={{ fontFamily: "var(--font-mono)", fontSize: 10.5, color: i <= step ? "var(--acc-lime)" : "var(--fg-faint)", letterSpacing: "0.1em" }}>{s.num}</div>
               <div style={{ fontSize: 12.5, marginTop: 3, fontWeight: 500 }}>{s.label}</div>
@@ -124,7 +122,6 @@ const Onboarding = ({ onNav, onUseCaseChange }) => {
         </div>
       </div>
 
-      {/* Error banner */}
       {error && (
         <div style={{ maxWidth: 1080, margin: "16px auto 0", width: "100%", padding: "0 32px" }}>
           <div style={{ padding: "12px 16px", background: "var(--acc-red-soft, #2a1010)", border: "1px solid var(--acc-red, #e55)", borderRadius: 8, color: "var(--acc-red, #e55)", fontSize: 13 }}>
@@ -136,22 +133,20 @@ const Onboarding = ({ onNav, onUseCaseChange }) => {
       {/* Content */}
       <div style={{ flex: 1, padding: "32px 32px 24px", maxWidth: 1080, width: "100%", margin: "0 auto" }}>
 
-        {/* Step 0 — Use Case Type */}
+        {/* Step 0 — Solution Type */}
         {step === 0 && (
           <div>
-            <h1 className="h1" style={{ fontSize: 40, marginBottom: 8 }}>What type of <em>GenAI solution</em><br/>are you building?</h1>
-            <p className="h1-sub">Pick a starting point — we'll pre-configure the agent graph, retrieval policy and evaluation set for that pattern.</p>
+            <h1 className="h1" style={{ fontSize: 40, marginBottom: 8 }}>What type of <em>RAG solution</em><br/>are you building?</h1>
+            <p className="h1-sub">Pick a starting point — we'll pre-configure the retrieval policy and evaluation set for that pattern.</p>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginTop: 28 }}>
-              {useCases.map(uc => {
+              {solutionTypes.map(uc => {
                 const sel = data.type === uc.id;
                 return (
                   <div key={uc.id} onClick={() => set("type", uc.id)} className="card" style={{
                     cursor: "pointer",
                     borderColor: sel ? "var(--acc-lime-line)" : "var(--line-soft)",
                     background: sel ? "linear-gradient(135deg, var(--bg-card-hi), var(--bg-card))" : "var(--bg-card)",
-                    transition: "all 160ms",
-                    padding: 22,
-                    position: "relative",
+                    transition: "all 160ms", padding: 22, position: "relative",
                   }}>
                     {sel && <div style={{ position: "absolute", top: 14, right: 14, width: 18, height: 18, borderRadius: "50%", background: "var(--acc-lime)", display: "grid", placeItems: "center" }}><Icon name="check" size={11} stroke={3} style={{ color: "var(--bg-base)" }}/></div>}
                     <div style={{ width: 36, height: 36, borderRadius: 10, background: sel ? "var(--acc-lime-soft)" : "var(--bg-elev)", border: `1px solid ${sel ? "var(--acc-lime-line)" : "var(--line)"}`, display: "grid", placeItems: "center", color: sel ? "var(--acc-lime)" : "var(--fg-muted)", marginBottom: 14 }}>
@@ -166,29 +161,29 @@ const Onboarding = ({ onNav, onUseCaseChange }) => {
           </div>
         )}
 
-        {/* Step 1 — Customer Context */}
+        {/* Step 1 — Context */}
         {step === 1 && (
           <div>
-            <h1 className="h1" style={{ fontSize: 40, marginBottom: 8 }}>Define the <em>customer problem</em></h1>
-            <p className="h1-sub">Capture the demo context, end users and constraints. This becomes the brief in the customer-facing POC report.</p>
+            <h1 className="h1" style={{ fontSize: 40, marginBottom: 8 }}>Define the <em>problem to solve</em></h1>
+            <p className="h1-sub">Capture the workspace context, end users and constraints. This becomes the brief in the solution report.</p>
             <div className="card mt-6" style={{ padding: 24 }}>
               <div className="grid-2 gap-4">
                 <div>
-                  <label className="field-label">Customer / Demo Name</label>
-                  <input className="input" value={data.name} onChange={(e) => set("name", e.target.value)} />
+                  <label className="field-label">Workspace Name</label>
+                  <input className="input" placeholder="e.g. Support Knowledge Assistant" value={data.name} onChange={(e) => set("name", e.target.value)} />
                 </div>
                 <div>
                   <label className="field-label">Industry</label>
-                  <input className="input" value={data.industry} onChange={(e) => set("industry", e.target.value)} />
+                  <input className="input" placeholder="e.g. Financial Services" value={data.industry} onChange={(e) => set("industry", e.target.value)} />
                 </div>
               </div>
               <div className="mt-4">
                 <label className="field-label">Business Problem</label>
-                <textarea className="textarea" value={data.problem} onChange={(e) => set("problem", e.target.value)} />
+                <textarea className="textarea" placeholder="Describe the core problem this RAG system will solve…" value={data.problem} onChange={(e) => set("problem", e.target.value)} />
               </div>
               <div className="mt-4">
                 <label className="field-label">Target Users</label>
-                <input className="input" value={data.users} onChange={(e) => set("users", e.target.value)} />
+                <input className="input" placeholder="e.g. Support agents, team leads" value={data.users} onChange={(e) => set("users", e.target.value)} />
               </div>
             </div>
           </div>
@@ -209,8 +204,7 @@ const Onboarding = ({ onNav, onUseCaseChange }) => {
                       padding: "7px 12px", borderRadius: 7, fontSize: 12.5,
                       border: `1px solid ${on ? "var(--acc-lime-line)" : "var(--line-soft)"}`,
                       background: on ? "var(--acc-lime-soft)" : "var(--bg-input)",
-                      color: on ? "var(--acc-lime)" : "var(--fg-muted)",
-                      cursor: "pointer",
+                      color: on ? "var(--acc-lime)" : "var(--fg-muted)", cursor: "pointer",
                       display: "inline-flex", alignItems: "center", gap: 6,
                     }}>
                       {on && <Icon name="check" size={11} stroke={2.5}/>}{s}
@@ -223,10 +217,10 @@ const Onboarding = ({ onNav, onUseCaseChange }) => {
 
               <label className="field-label">Expected Answer Style</label>
               <Seg value={data.style} options={[
-                { value: "Concise",            label: "CONCISE"   },
-                { value: "Detailed",           label: "DETAILED"  },
-                { value: "Support-Agent Tone", label: "SUPPORT"   },
-                { value: "Technical Tone",     label: "TECHNICAL" },
+                { value: "Concise",      label: "CONCISE"   },
+                { value: "Detailed",     label: "DETAILED"  },
+                { value: "Support Tone", label: "SUPPORT"   },
+                { value: "Technical",    label: "TECHNICAL" },
               ]} onChange={(v) => set("style", v)} />
 
               <div className="grid-2 gap-4 mt-4">
@@ -273,25 +267,27 @@ const Onboarding = ({ onNav, onUseCaseChange }) => {
         {/* Step 3 — Review & Launch */}
         {step === 3 && (
           <div>
-            <h1 className="h1" style={{ fontSize: 40, marginBottom: 8 }}>Review your <em>GenAI POC</em><br/>workspace</h1>
+            <h1 className="h1" style={{ fontSize: 40, marginBottom: 8 }}>Review your <em>workspace</em><br/>configuration</h1>
             <p className="h1-sub">Confirm the configuration. You can change any of this later from the workspace settings.</p>
 
             <div className="card mt-6" style={{ padding: 0, overflow: "hidden", borderColor: "var(--acc-lime-line)" }}>
               <div style={{ padding: "22px 26px", background: "linear-gradient(135deg, var(--bg-card-hi), var(--bg-card))", borderBottom: "1px solid var(--line-soft)" }}>
                 <div className="eyebrow" style={{ marginBottom: 10 }}><span className="glyph"></span> Workspace Summary</div>
-                <div style={{ fontFamily: "var(--font-display)", fontSize: 28, letterSpacing: "-0.01em", lineHeight: 1.25 }}>{data.name}</div>
-                <div style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--text-muted)", marginTop: 6 }}>{data.industry} · {useCases.find(u => u.id === data.type)?.title}</div>
+                <div style={{ fontFamily: "var(--font-display)", fontSize: 28, letterSpacing: "-0.01em", lineHeight: 1.25 }}>{data.name || "Unnamed Workspace"}</div>
+                <div style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--text-muted)", marginTop: 6 }}>
+                  {data.industry || "No industry set"} · {solutionTypes.find(u => u.id === data.type)?.title}
+                </div>
               </div>
 
               <div style={{ padding: "20px 26px" }}>
                 <div className="grid-2 gap-6">
                   <div>
-                    <div style={{ fontFamily: "var(--font-mono)", fontSize: 10.5, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 6 }}>Goal</div>
-                    <div style={{ fontSize: 13.5, color: "var(--fg-muted)", lineHeight: 1.55 }}>{data.problem}</div>
+                    <div style={{ fontFamily: "var(--font-mono)", fontSize: 10.5, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 6 }}>Problem Statement</div>
+                    <div style={{ fontSize: 13.5, color: "var(--fg-muted)", lineHeight: 1.55 }}>{data.problem || "Not specified"}</div>
                   </div>
                   <div>
                     <div style={{ fontFamily: "var(--font-mono)", fontSize: 10.5, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 6 }}>Target Users</div>
-                    <div style={{ fontSize: 13.5, color: "var(--fg-muted)", lineHeight: 1.55 }}>{data.users}</div>
+                    <div style={{ fontSize: 13.5, color: "var(--fg-muted)", lineHeight: 1.55 }}>{data.users || "Not specified"}</div>
                   </div>
                 </div>
 
@@ -305,7 +301,7 @@ const Onboarding = ({ onNav, onUseCaseChange }) => {
                     [`Grounding: ${data.grounding}`, true],
                     [`Latency: ${data.latency.toLowerCase()}`, true],
                     [`Style: ${data.style}`, true],
-                    [`Sources: ${data.sources.join(", ")}`, true],
+                    [`Sources: ${data.sources.length > 0 ? data.sources.join(", ") : "None selected"}`, data.sources.length > 0],
                   ].map(([label, on], i) => (
                     <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 12.5, color: "var(--fg-muted)", padding: "6px 0" }}>
                       <Icon name="check" size={11} stroke={2.5} style={{ color: on ? "var(--acc-lime)" : "var(--fg-faint)" }}/>
@@ -332,11 +328,7 @@ const Onboarding = ({ onNav, onUseCaseChange }) => {
             </button>
           ) : (
             <button className="btn btn-primary" onClick={handleLaunch} disabled={launching}>
-              {launching ? (
-                "Creating workspace…"
-              ) : (
-                <><Icon name="sparkles" size={12}/> Launch Workspace</>
-              )}
+              {launching ? "Creating workspace…" : <><Icon name="sparkles" size={12}/> Launch Workspace</>}
             </button>
           )}
         </div>

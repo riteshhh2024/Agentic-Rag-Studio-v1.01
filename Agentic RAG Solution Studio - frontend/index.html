@@ -25,6 +25,7 @@
   <script type="text/babel" src="components/chrome.jsx" data-presets="react"></script>
 
   <!-- Screens -->
+  <script type="text/babel" src="screens/home.jsx" data-presets="react"></script>
   <script type="text/babel" src="screens/dashboard.jsx" data-presets="react"></script>
   <script type="text/babel" src="screens/usecases.jsx" data-presets="react"></script>
   <script type="text/babel" src="screens/knowledge.jsx" data-presets="react"></script>
@@ -39,9 +40,27 @@
 
   <!-- Root App -->
   <script type="text/babel" data-presets="react">
+    // Full-screen overlay shown while checking workspace existence after login
+    const BootSpinner = () => (
+      <div style={{
+        minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
+        background: "var(--bg-base)", flexDirection: "column", gap: 16,
+      }}>
+        <div style={{ width: 40, height: 40, borderRadius: 12, background: "var(--bg-card)",
+          border: "1px solid var(--acc-lime-line)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <path d="M4 6 L12 2 L20 6 L20 18 L12 22 L4 18 Z" stroke="var(--acc-lime)" strokeWidth="1.4" strokeLinejoin="round"/>
+            <circle cx="12" cy="12" r="1.8" fill="var(--acc-lime)"/>
+          </svg>
+        </div>
+        <div style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--text-muted)" }}>
+          Loading workspace…
+        </div>
+      </div>
+    );
+
     const App = () => {
       // ── Auth state ────────────────────────────────────────────────────────
-      // user = null → show Login;  user = { studioId } → show main app
       const [user, setUser] = React.useState(() => {
         try {
           const saved = sessionStorage.getItem("rag_studio_user");
@@ -57,11 +76,34 @@
       const handleLogout = () => {
         sessionStorage.removeItem("rag_studio_user");
         setUser(null);
+        setPage("home");
+        setActiveUseCase(null);
+        setBootState("idle");
       };
 
-      // ── App state ─────────────────────────────────────────────────────────
-      const [page, setPage] = React.useState("dashboard");
+      // ── Boot flow — check workspaces after login ───────────────────────────
+      // bootState: "idle" | "checking" | "done"
+      const [bootState,     setBootState]     = React.useState("idle");
+      const [page,          setPage]          = React.useState("home");
       const [activeUseCase, setActiveUseCase] = React.useState(null);
+      const [providerConfig, setProviderConfig] = React.useState({ provider: "openai", chat_model: "gpt-4o-mini", embed_model: "text-embedding-3-small" });
+
+      React.useEffect(() => {
+        if (!user || bootState !== "idle") return;
+        setBootState("checking");
+        Promise.all([
+          API.usecases.list(),
+          API.settings.getProviderConfig().catch(() => null),
+        ]).then(([list, pc]) => {
+            if (pc) setProviderConfig(pc);
+            setPage(list.length === 0 ? "onboarding" : "home");
+            setBootState("done");
+          })
+          .catch(() => {
+            setPage("home");
+            setBootState("done");
+          });
+      }, [user]);
 
       const handleNav = (id, uc) => {
         setPage(id);
@@ -73,27 +115,43 @@
         return <Login onLogin={handleLogin} />;
       }
 
-      const screenProps = { activeUseCase, onUseCaseChange: setActiveUseCase, onNav: handleNav };
+      // ── Boot check spinner ────────────────────────────────────────────────
+      if (bootState === "checking") {
+        return <BootSpinner />;
+      }
+
+      // ── Onboarding — full screen (no sidebar/header) ──────────────────────
+      if (page === "onboarding") {
+        return (
+          <Onboarding
+            activeUseCase={activeUseCase}
+            onUseCaseChange={setActiveUseCase}
+            onNav={handleNav}
+          />
+        );
+      }
+
+      const screenProps = { activeUseCase, onUseCaseChange: setActiveUseCase, onNav: handleNav, providerConfig };
 
       const screens = {
-        dashboard:  <Dashboard  onNav={handleNav} activeUseCase={activeUseCase} />,
-        usecases:   <UseCases   {...screenProps} />,
-        knowledge:  <Knowledge  {...screenProps} />,
-        rag:        <RagConfig  {...screenProps} />,
-        agent:      <Agent      {...screenProps} />,
-        eval:       <Evaluation {...screenProps} />,
-        bench:      <Benchmarks {...screenProps} />,
-        report:     <Report     {...screenProps} />,
-        settings:   <Settings   {...screenProps} />,
-        onboarding: <Onboarding {...screenProps} />,
+        home:      <Home       user={user} onNav={handleNav} />,
+        dashboard: <Dashboard  onNav={handleNav} activeUseCase={activeUseCase} />,
+        usecases:  <UseCases   {...screenProps} />,
+        knowledge: <Knowledge  {...screenProps} />,
+        rag:       <RagConfig  {...screenProps} />,
+        agent:     <Agent      {...screenProps} />,
+        eval:      <Evaluation {...screenProps} />,
+        bench:     <Benchmarks {...screenProps} />,
+        report:    <Report     {...screenProps} />,
+        settings:  <Settings   {...screenProps} onProviderChange={setProviderConfig} />,
       };
 
       return (
         <div className="app">
-          <Sidebar active={page} onNav={handleNav} />
+          <Sidebar active={page} onNav={handleNav} activeUseCase={activeUseCase} />
           <main className="main">
-            <Header active={page} activeUseCase={activeUseCase} user={user} onLogout={handleLogout} />
-            {screens[page] || screens.dashboard}
+            <Header active={page} activeUseCase={activeUseCase} user={user} onLogout={handleLogout} providerConfig={providerConfig} />
+            {screens[page] || screens.home}
           </main>
         </div>
       );

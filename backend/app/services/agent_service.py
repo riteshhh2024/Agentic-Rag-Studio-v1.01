@@ -73,7 +73,7 @@ class AgentService:
             usecase_name=usecase.name,
             answer_style=usecase.answer_style,
         )
-        provider = LLMProvider(payload.provider)
+        provider = LLMProvider(payload.provider, model=payload.model)
         wall_start = time.time()
 
         # --- Node 1: Intent Analyzer ---

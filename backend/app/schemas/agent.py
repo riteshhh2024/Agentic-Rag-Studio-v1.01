@@ -14,6 +14,7 @@ class AgentAskRequest(BaseModel):
     question: str
     rag_config: Optional[RagConfigInline] = None
     provider: str = "openai"
+    model: Optional[str] = None       # overrides the provider's default model
 
 
 class Citation(BaseModel):

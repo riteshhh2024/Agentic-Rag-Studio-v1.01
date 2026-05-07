@@ -42,7 +42,7 @@ const UseCases = ({ activeUseCase, onUseCaseChange }) => {
 
   const handleSave = async () => {
     if (!form.name.trim() || !form.problem.trim()) {
-      setError("Customer name and business problem are required.");
+      setError("Workspace name and business problem are required.");
       return;
     }
     setSaving(true);
@@ -97,7 +97,7 @@ const UseCases = ({ activeUseCase, onUseCaseChange }) => {
       <div className="page-head">
         <div>
           <div className="eyebrow"><span className="glyph"></span> Step 01 · Use Case Intake</div>
-          <h1 className="h1" style={{ fontSize: 38 }}>Define the customer<br /><em>problem to solve</em></h1>
+          <h1 className="h1" style={{ fontSize: 38 }}>Define the workspace<br /><em>problem to solve</em></h1>
         </div>
         <div className="flex gap-2">
           <button className="btn btn-ghost" onClick={handleNew}>
@@ -119,8 +119,8 @@ const UseCases = ({ activeUseCase, onUseCaseChange }) => {
         <div className="card">
           <div className="card-head">
             <div>
-              <div className="card-title">Customer Brief</div>
-              <div className="card-sub mt-2">Captures the demo context, end users and constraints</div>
+              <div className="card-title">Workspace Brief</div>
+              <div className="card-sub mt-2">Captures the workspace context, end users and constraints</div>
             </div>
             <Badge tone={saved ? "ok" : "lime"}>{usecaseId ? (saved ? "Saved" : "Unsaved") : "New"}</Badge>
           </div>
@@ -128,8 +128,8 @@ const UseCases = ({ activeUseCase, onUseCaseChange }) => {
           <div className="flex-col gap-4">
             <div className="grid-2 gap-4">
               <div>
-                <label className="field-label">Customer / Demo Name *</label>
-                <input className="input" value={form.name} onChange={set("name")} placeholder="e.g. Acme Support Assistant" />
+                <label className="field-label">Workspace Name *</label>
+                <input className="input" value={form.name} onChange={set("name")} placeholder="e.g. HR Policy Assistant" />
               </div>
               <div>
                 <label className="field-label">Industry</label>

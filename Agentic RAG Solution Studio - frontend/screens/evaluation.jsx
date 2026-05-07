@@ -1,5 +1,5 @@
 // Evaluation Dashboard — wired to real API
-const Evaluation = ({ activeUseCase, onNav }) => {
+const Evaluation = ({ activeUseCase, onNav, providerConfig }) => {
   const usecaseId = activeUseCase?.id;
 
   // ── data state ────────────────────────────────────────────────────────────
@@ -81,7 +81,7 @@ const Evaluation = ({ activeUseCase, onNav }) => {
     if (!usecaseId) return;
     setRunning(true); setError(null);
     try {
-      const summary = await API.evaluation.run({ usecase_id: usecaseId, provider: "openai" });
+      const summary = await API.evaluation.run({ usecase_id: usecaseId, provider: providerConfig?.provider || "openai", model: providerConfig?.chat_model || null });
       const detail  = await API.evaluation.get(summary.evaluation_id);
       setEvalResult(detail);
       const evals = await API.evaluation.listEvaluations(usecaseId);

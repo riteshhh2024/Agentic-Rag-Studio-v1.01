@@ -12,6 +12,23 @@ def gen_id():
     return str(uuid.uuid4())
 
 
+class AppSetting(Base):
+    __tablename__ = "app_settings"
+    key   = Column(String, primary_key=True)
+    value = Column(Text, nullable=False)
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id           = Column(String, primary_key=True, default=gen_id)
+    studio_id    = Column(String, unique=True, nullable=False)
+    password     = Column(String, nullable=False)
+    display_name = Column(String, nullable=False, default="")
+    role         = Column(String, default="admin")
+    created_at   = Column(DateTime, default=datetime.utcnow)
+
+
 class UseCase(Base):
     __tablename__ = "use_cases"
 
@@ -19,9 +36,9 @@ class UseCase(Base):
     name = Column(String, nullable=False)
     industry = Column(String, nullable=True)
     business_problem = Column(Text, nullable=False)
-    target_users = Column(JSON, default=list)        # list of strings
-    document_types = Column(JSON, default=list)      # list of strings
-    success_criteria = Column(JSON, default=list)    # list of strings
+    target_users = Column(JSON, default=list)
+    document_types = Column(JSON, default=list)
+    success_criteria = Column(JSON, default=list)
     answer_style = Column(String, default="concise")
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -40,9 +57,9 @@ class Document(Base):
     id = Column(String, primary_key=True, default=gen_id)
     usecase_id = Column(String, ForeignKey("use_cases.id"), nullable=False)
     filename = Column(String, nullable=False)
-    file_type = Column(String, nullable=False)  # pdf/txt/md
+    file_type = Column(String, nullable=False)
     file_path = Column(String, nullable=False)
-    status = Column(String, default="uploaded")  # uploaded/processed/indexed/failed
+    status = Column(String, default="uploaded")
     text_length = Column(Integer, default=0)
     chunk_count = Column(Integer, default=0)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -77,7 +94,7 @@ class RagConfig(Base):
     retrieval_mode = Column(String, default="vector")
     reranking = Column(Boolean, default=False)
     citation_required = Column(Boolean, default=True)
-    embedding_provider = Column(String, default="openai")  # openai | ollama
+    embedding_provider = Column(String, default="openai")
     created_at = Column(DateTime, default=datetime.utcnow)
 
     usecase = relationship("UseCase", back_populates="rag_configs")
@@ -91,8 +108,8 @@ class AgentRun(Base):
     question = Column(Text, nullable=False)
     answer = Column(Text, nullable=True)
     provider = Column(String, default="openai")
-    risk_level = Column(String, nullable=True)  # low/medium/high
-    status = Column(String, default="pending")   # pending/completed/failed
+    risk_level = Column(String, nullable=True)
+    status = Column(String, default="pending")
     latency_ms = Column(Integer, nullable=True)
     input_tokens = Column(Integer, nullable=True)
     output_tokens = Column(Integer, nullable=True)

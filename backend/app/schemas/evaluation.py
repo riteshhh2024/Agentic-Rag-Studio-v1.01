@@ -29,6 +29,7 @@ class GoldenQuestionResponse(BaseModel):
 class EvaluationRunRequest(BaseModel):
     usecase_id: str
     provider: str = "openai"
+    model: Optional[str] = None
     rag_config: Optional[dict] = None
 
 
